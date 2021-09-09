@@ -57,13 +57,13 @@ if __name__ == '__main__':
                 set(movies[showtime.movie.movie_id]['showtimes'][showtime.date][theater_code])
             )
 
-        save_obj(theater_info, 'data/{}{}{}_theaters.pkl'.format(
-            datetime.datetime.today().year,
-            str(datetime.datetime.today().month).zfill(2),
-            str(datetime.datetime.today().day).zfill(2)
-        ))
-        save_obj(movies, 'data/{}{}{}_movies.pkl'.format(
-            datetime.datetime.today().year,
-            str(datetime.datetime.today().month).zfill(2),
-            str(datetime.datetime.today().day).zfill(2)
-        ))
+    save_obj(theater_info, 'data/{}{}{}_theaters.pkl'.format(
+        datetime.datetime.today().year,
+        str(datetime.datetime.today().month).zfill(2),
+        str(datetime.datetime.today().day).zfill(2)
+    ))
+    save_obj(movies, 'data/{}{}{}_movies.pkl'.format(
+        datetime.datetime.today().year,
+        str(datetime.datetime.today().month).zfill(2),
+        str(datetime.datetime.today().day).zfill(2)
+    ))
