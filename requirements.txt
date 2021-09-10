@@ -1,5 +1,2 @@
-allocine
-datetime
-tqdm
-os
-json
+allocine >= 0.0.13
+tqdm >= 4.56.0

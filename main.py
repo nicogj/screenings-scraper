@@ -242,4 +242,4 @@ def prep_data_for_website():
     with open('./classic_movies.json', 'w') as f:
         json.dump(classic_movies, f)
 
-#prep_data_for_website()
+prep_data_for_website()
