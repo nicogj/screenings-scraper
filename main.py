@@ -1,26 +1,9 @@
-import pickle
 from allocine import Allocine
-import datetime
-from IPython.display import display, Markdown
+from datetime import datetime
 from tqdm.auto import tqdm
-import numpy as np
-import itertools
-import re
 import os
-import time
-import glob
-from collections import OrderedDict
 import json
 
-
-
-def save_obj(obj, filename):
-    with open(filename, 'wb') as f:
-        pickle.dump(obj, f)
-
-def load_obj(filename):
-    with open(filename, 'rb') as f:
-        return pickle.load(f)
 
 def transform_zipcode(code):
     if str(code)[:2] == '75':
@@ -184,23 +167,15 @@ def allocine_scraper():
             movies[showtime.movie.movie_id]['showtimes'][showtime.date][theater_code] = list(
                 set(movies[showtime.movie.movie_id]['showtimes'][showtime.date][theater_code])
             )
-
-        save_obj(theater_info, 'data/{}{}{}_theaters.pkl'.format(
-            datetime.datetime.today().year,
-            str(datetime.datetime.today().month).zfill(2),
-            str(datetime.datetime.today().day).zfill(2)
-        ))
-        save_obj(movies, 'data/{}{}{}_movies.pkl'.format(
-            datetime.datetime.today().year,
-            str(datetime.datetime.today().month).zfill(2),
-            str(datetime.datetime.today().day).zfill(2)
-        ))
+            
+    return movies, theater_info
 
 ######################
 #PREP DATA FOR WEBSITE
 ######################
 def prep_data_for_website():
-    last_year = 2017
+    todays_date = datetime.today()
+    last_year = todays_date.year - 4
     current_path = os.getcwd()
     data_path = os.path.join(current_path, 'data')
     date = os.listdir(data_path)
@@ -209,10 +184,7 @@ def prep_data_for_website():
 
     print("Fetching data collected on {}".format(date))
     classic_movies, theaters = allocine_scraper()
-    #date_name = os.path.join(data_path, date)
-    #classic_movies = load_obj('{}_movies.pkl'.format(date_name))
-    #theaters = load_obj('{}_theaters.pkl'.format(date_name))
-
+    
     classic_movies = {
         k: v for k, v in classic_movies.items() if v['year'] <= last_year
     }
@@ -269,3 +241,5 @@ def prep_data_for_website():
 
     with open('./classic_movies.json', 'w') as f:
         json.dump(classic_movies, f)
+
+prep_data_for_website()
