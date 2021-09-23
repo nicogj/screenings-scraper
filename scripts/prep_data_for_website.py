@@ -8,7 +8,7 @@ import glob
 from collections import OrderedDict
 import json
 
-from utils.utils import load_obj, save_obj, clean_theater_name, good_movie, transform_zipcode
+from utils.utils import load_obj, save_obj, clean_theater_name, good_movie, transform_zipcode, get_last_name
 
 last_year = 2017
 
@@ -51,6 +51,7 @@ for movie_id in classic_movies.keys():
         movie['title'] = classic_movies[movie_id]['title']
         movie['original_title'] = classic_movies[movie_id]['original_title']
         movie['directors'] = classic_movies[movie_id]['directors']
+        movie['last_name_directors'] = get_last_name(classic_movies[movie_id]['directors'])
         movie['year'] = classic_movies[movie_id]['year']
         movie['date'] = [showtime.year, showtime.month, showtime.day]
         movie['id'] = movie_id
@@ -77,5 +78,5 @@ for movie_id in classic_movies.keys():
 classic_movies = {}
 classic_movies['movies'] = movie_list
 
-with open('../website/classic_movies.json', 'w') as f:
+with open('../website_cine/classic_movies.json', 'w') as f:
     json.dump(classic_movies, f)

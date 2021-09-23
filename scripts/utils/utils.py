@@ -17,7 +17,7 @@ def transform_zipcode(code):
             arr = str(arr) + "ème"
         return arr
     else:
-        return str(code)
+        return str(code)[:2]
 
 def get_theater_codes():
 
@@ -94,6 +94,12 @@ def get_theater_codes():
         'W7509', # UGC Ciné Cité Paris 19
         'C0105', # UGC Rotonde
         'C0126', # UGC Opéra
+        'B0116', # Cinéma Le Mélies
+        'B0104', # Cin'Hoche
+        'B0047', # Ciné 104
+        'B0101', # LE STUDIO
+        'B0123', # ESPACE 1789
+
     ]
 
     return theater_codes
@@ -123,3 +129,12 @@ def good_movie(movie):
         return False
     else:
         return True
+
+def get_last_name(name):
+
+    if ',' in name:
+        name = name.split(',')[0].strip()
+
+    last_name = name.split(' ')[-1]
+
+    return last_name
