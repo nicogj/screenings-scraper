@@ -3,6 +3,7 @@ from datetime import datetime
 from tqdm.auto import tqdm
 import os
 import json
+import pickle
 
 
 def transform_zipcode(code):
@@ -91,6 +92,11 @@ def get_theater_codes():
         'W7509', # UGC Ciné Cité Paris 19
         'C0105', # UGC Rotonde
         'C0126', # UGC Opéra
+        'B0116', # Cinéma Le Mélies
+        'B0104', # Cin'Hoche
+        'B0047', # Ciné 104
+        'B0101', # LE STUDIO
+        'B0123', # ESPACE 1789
     ]
 
     return theater_codes
@@ -124,6 +130,10 @@ def good_movie(movie):
 ######################
 #ALLOCINE SCRAPER#####
 ######################
+def save_obj(obj, filename):
+    with open(filename, 'wb') as f:
+        pickle.dump(obj, f)
+
 def allocine_scraper():
     allocine = Allocine()
     theater_codes = get_theater_codes()
@@ -167,7 +177,17 @@ def allocine_scraper():
             movies[showtime.movie.movie_id]['showtimes'][showtime.date][theater_code] = list(
                 set(movies[showtime.movie.movie_id]['showtimes'][showtime.date][theater_code])
             )
-            
+    save_obj(theater_info, 'data/{}{}{}_theaters.pkl'.format(
+        datetime.datetime.today().year,
+        str(datetime.datetime.today().month).zfill(2),
+        str(datetime.datetime.today().day).zfill(2)
+    ))
+    save_obj(movies, 'data/{}{}{}_movies.pkl'.format(
+        datetime.datetime.today().year,
+        str(datetime.datetime.today().month).zfill(2),
+        str(datetime.datetime.today().day).zfill(2)
+    ))
+
     return movies, theater_info
 
 ######################
