@@ -82,6 +82,7 @@ def get_theater_codes():
         'W7520', # Pathé La Villette
         'C0010', # UGC Normandie
         'C0026', # UGC Ciné Cité Bercy
+        'C0127', # Centre Pompidou
         'C0102', # UGC Danton
         'C0103', # UGC Montparnasse
         'C0104', # UGC Odéon
@@ -116,6 +117,8 @@ def clean_theater_name(name):
         name = "L'Archipel"
     if name == "Le Louxor - Palais du cinéma":
         name = "Le Louxor"
+    if name == "Centre Georges-Pompidou":
+        name = "Centre Pompidou"
     name = name.strip()
     return name
 
@@ -204,7 +207,7 @@ def prep_data_for_website():
 
     print("Fetching data collected on {}".format(date))
     classic_movies, theaters = allocine_scraper()
-    
+
     classic_movies = {
         k: v for k, v in classic_movies.items() if v['year'] <= last_year
     }
