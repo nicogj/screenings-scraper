@@ -164,6 +164,8 @@ def allocine_scraper():
                 movies[showtime.movie.movie_id]['title'] = showtime.movie.title
                 movies[showtime.movie.movie_id]['original_title'] = showtime.movie.original_title
                 movies[showtime.movie.movie_id]['duration'] = showtime.movie.duration
+                if showtime.movie.year==None:
+                    showtime.movie.year=datetime.today().year
                 movies[showtime.movie.movie_id]['year'] = showtime.movie.year
                 movies[showtime.movie.movie_id]['directors'] = showtime.movie.directors
                 movies[showtime.movie.movie_id]['language'] = showtime.movie.language
@@ -204,10 +206,10 @@ def prep_data_for_website():
     date = os.listdir(data_path)
     date.sort()
     date = date[-1].split('_')[0] #get the date from the latest file
-
+    
     print("Fetching data collected on {}".format(date))
     classic_movies, theaters = allocine_scraper()
-
+    
     classic_movies = {
         k: v for k, v in classic_movies.items() if v['year'] <= last_year
     }
