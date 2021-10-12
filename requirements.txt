@@ -1,2 +1,2 @@
-allocine >= 0.0.13
+requests
 tqdm >= 4.56.0
