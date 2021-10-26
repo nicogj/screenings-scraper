@@ -98,6 +98,7 @@ def get_theater_codes():
         'B0047', # Ciné 104
         'B0101', # LE STUDIO
         'B0123', # ESPACE 1789
+        'C0072', # LE GRAND ACTION
     ]
 
     return theater_codes
@@ -115,6 +116,8 @@ def clean_theater_name(name):
         name = "Le Champo"
     if name == "L'Archipel - PARIS CINE":
         name = "L'Archipel"
+    if name == "Le Brady Cinema & Théâtre":
+        name = "Le Brady"
     if name == "Le Louxor - Palais du cinéma":
         name = "Le Louxor"
     if name == "Centre Georges-Pompidou":
@@ -123,9 +126,17 @@ def clean_theater_name(name):
     return name
 
 def good_movie(movie):
+    children_movies = [
+        "Wallace & Gromit : Cœurs à modeler",
+        "Oups ! J’ai raté l’arche…",
+        "Les Trois brigands",
+        "Le Chant de la Mer",
+        "Clochette et le secret des fées",
+        "Lilla Anna"
+    ]
     if movie['directors']==None:
         return False
-    if movie['title']=="Wallace & Gromit : Cœurs à modeler":
+    if movie['title'] in children_movies:
         return False
     else:
         return True
@@ -206,10 +217,10 @@ def prep_data_for_website():
     date = os.listdir(data_path)
     date.sort()
     date = date[-1].split('_')[0] #get the date from the latest file
-    
+
     print("Fetching data collected on {}".format(date))
     classic_movies, theaters = allocine_scraper()
-    
+
     classic_movies = {
         k: v for k, v in classic_movies.items() if v['year'] <= last_year
     }
