@@ -210,15 +210,9 @@ def allocine_scraper():
 #PREP DATA FOR WEBSITE
 ######################
 def prep_data_for_website():
-    todays_date = datetime.today()
-    last_year = todays_date.year - 4
-    current_path = os.getcwd()
-    data_path = os.path.join(current_path, 'data')
-    date = os.listdir(data_path)
-    date.sort()
-    date = date[-1].split('_')[0] #get the date from the latest file
 
-    print("Fetching data collected on {}".format(date))
+    last_year = datetime.today().year - 4
+
     classic_movies, theaters = allocine_scraper()
 
     classic_movies = {
