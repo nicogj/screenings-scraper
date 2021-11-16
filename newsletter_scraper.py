@@ -136,6 +136,16 @@ reviews.loc[
     reviews['movie']=='"La Rue de la honte", par Kenji Mizoguchi (1956)', 'movie'
 ] = "La Rue de la honte, Kenji Mizoguchi (1956)"
 
+reviews.loc[
+    (reviews['movie']=="Bonnie and Clyde, Arthur Penn (1967)")&(reviews['date']=="2021-07-28"), 'review'
+] = "Le film qui a chamboul\u00e9 la critique am\u00e9ricaine et lanc\u00e9 le Nouvel Hollywood est toujours aussi percutant aujourd'hui.<blockquote>\u00ab&nbsp;Audiences [...] are not given a simple, secure basis for identification; they are made to feel but are not told how to feel. \u201cBonnie and Clyde\u201d is not a serious melodrama involving us in the plight of the innocent but a movie that assumes [...] that we don\u2019t need to pretend we\u2019re interested only in the falsely accused, as if real criminals had no connection with us.&nbsp;\u00bb</blockquote><blockquote style=\"text-align: right;\">- <a href=\"https://www.newyorker.com/magazine/1967/10/21/bonnie-and-clyde\"target=\"_blank\">Pauline Kael, The New Yorker, 1967</a></blockquote>"
+reviews.loc[
+    (reviews['movie']=="L'enfance nue,\u00a0Maurice Pialat (1969)")&(reviews['date']=="2021-08-04"), 'review'
+] = "Le premier film de Maurice Pialat, ressorti dans le cadre d'une retrospective en cours, est une p\u00e9pite. En choisissant principalement des acteurs non-professionnels, Pialat emploie un style quasi-documentaire pour dresser un portrait doux-amer de l'enfance sous la R\u00e9publique fran\u00e7aise des ann\u00e9es 60.<blockquote>\u00ab&nbsp;J'\u00e9tais inconscient. Tout \u00e9tait r\u00e9uni pour que ca ne marche pas. Moi, en tant que spectateur, je n'y serais pas all\u00e9&nbsp;!&nbsp;\u00bb</blockquote><blockquote style=\"text-align: right;\">- Maurice Pialat</blockquote>"
+reviews.loc[
+    (reviews['movie']=="Mother,\u00a0Bong Joon Ho\u00a0(2009)")&(reviews['date']=="2021-08-18"), 'review'
+] = "<blockquote>\u00ab&nbsp;Malgr\u00e9 ces ruptures de tons et de genres, malgr\u00e9 ses constantes surprises psychologiques et sc\u00e9naristiques, <em>Mother</em> garde le cap tendu de son suspense polaro-filial et maintient une tenue formelle impeccable&nbsp;: beaut\u00e9 des plans, virtuosit\u00e9 du montage, des changements d\u2019intensit\u00e9, des glissements entre burlesque et tragique.&nbsp;\u00bb</blockquote><blockquote style=\"text-align: right;\">- <a href=\"https://www.lesinrocks.com/cinema/mother-25894-22-01-2010/\"target=\"_blank\">Serge Kaganski, Les Inrockuptibles, 2010</a></blockquote>"
+
 reviews['movie_name'] = reviews['movie'].apply(lambda x: ','.join(x.split(',')[:-1]))
 reviews['movie_directors'] = reviews['movie'].apply(lambda x: re.sub('\(.+\)', '', x.split(',')[-1]).strip())
 reviews['movie_year'] = reviews['movie'].apply(lambda x: x.split(',')[-1][-5:-1])
