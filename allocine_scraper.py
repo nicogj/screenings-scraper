@@ -4,7 +4,7 @@ from tqdm.auto import tqdm
 import os
 import json
 import pickle
-
+import time
 
 def transform_zipcode(code):
     if str(code)[:2] == '75':
@@ -156,9 +156,16 @@ def allocine_scraper():
     theater_info = {}
 
     for theater_code in tqdm(theater_codes):
-        try:
-            theater = allocine.get_theater(theater_code)
-        except:
+        try_nb = 1
+        while try_nb < 5:
+            try:
+                theater = allocine.get_theater(theater_code)
+                break
+            except:
+                try_nb += 1
+                print("Trying again for {}".format(theater_code))
+                time.sleep(5)
+        if try_nb==5:
             print("Could not fetch theater {}".format(theater_code))
             continue
 
