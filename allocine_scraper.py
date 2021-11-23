@@ -156,7 +156,7 @@ def allocine_scraper():
     theater_info = {}
 
     for theater_code in tqdm(theater_codes):
-        try_nb = 1
+        try_nb = 0
         while try_nb < 5:
             try:
                 theater = allocine.get_theater(theater_code)
