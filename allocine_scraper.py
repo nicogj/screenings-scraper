@@ -167,6 +167,7 @@ def allocine_scraper():
                 time.sleep(5)
         if try_nb==5:
             print("Could not fetch theater {}".format(theater_code))
+            print("Please check https://www.allocine.fr/seance/salle_gen_csalle={}.html to see if we're missing out.".format(theater_code))
             continue
 
         theater_info[theater_code] = {}
