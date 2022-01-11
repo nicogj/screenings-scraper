@@ -277,6 +277,8 @@ def prep_data_for_website():
     classic_movies = {}
     classic_movies['movies'] = movie_list
 
+    with open('classic_movies.json', 'w') as f:
+        json.dump(classic_movies, f)
     with open('../website_cine/data/classic_movies.json', 'w') as f:
         json.dump(classic_movies, f)
 
