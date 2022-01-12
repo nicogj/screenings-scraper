@@ -65,8 +65,8 @@ for elem in soup.find_all(class_ = 'campaign'):
 links['2021-08-18'] = links['2021-08-19']
 del links['2021-08-19']
 
-links['2021-08-11'] = links['2021-08-12']
-del links['2021-08-12']
+#links['2021-08-11'] = links['2021-08-12']
+#del links['2021-08-12']
 
 for elem in links.keys():
     if datetime.strptime(elem, "%Y-%m-%d").date().weekday() != 2:
