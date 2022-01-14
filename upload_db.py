@@ -2,6 +2,7 @@ import firebase_admin
 import json
 from firebase_admin import credentials
 from firebase_admin import firestore
+import time
 
 # Use a service account
 cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
@@ -32,6 +33,8 @@ with open('classic_movies.json') as file:
         #dates are year_month_day
         date = '_'.join([str(int) for int in movie['date']])
         collection_name = u'allocine_movies_' + date
-        #delete_collection(collection_name, 5)
+        print(collection_name, movie["id"])
+        # #delete_collection(collection_name, 5)
         ref = db.collection(collection_name).document(str(movie.get("id", "none" )))
         ref.set(movie, merge=True)
+        time.sleep(0.05)
