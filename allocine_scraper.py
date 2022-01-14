@@ -311,7 +311,7 @@ def upload_data_in_database():
             date = '_'.join([str(int) for int in movie['date']])
             collection_name = u'allocine_movies_' + date
             print(collection_name, movie["id"])
-            # #delete_collection(collection_name, 5)
+            #delete_collection(collection_name, 5)
             ref = db.collection(collection_name).document(str(movie.get("id", "none" )))
             ref.set(movie, merge=True)
             time.sleep(0.05)
