@@ -1,10 +1,13 @@
 from allocine import Allocine
 from datetime import datetime
 from tqdm.auto import tqdm
-import os
 import json
 import pickle
 import time
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+
 
 def transform_zipcode(code):
     if str(code)[:2] == '75':
@@ -282,4 +285,36 @@ def prep_data_for_website():
     with open('../website_cine/data/classic_movies.json', 'w') as f:
         json.dump(classic_movies, f)
 
+
+def delete_collection(coll_ref, batch_size):
+    docs = db.collection(coll_ref).stream()
+    deleted = 0
+    for doc in docs:
+        print(f'Deleting doc {doc.id} => {doc.to_dict()}')
+        doc.reference.delete()
+        deleted = deleted + 1
+
+    if deleted >= batch_size:
+        return delete_collection(coll_ref, batch_size)
+
+
+def upload_data_in_database():
+    #Use a service account
+    cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+
+    with open('classic_movies.json') as file:
+        movies = json.load(file)["movies"]
+        for movie in movies:
+            #dates are year_month_day
+            date = '_'.join([str(int) for int in movie['date']])
+            collection_name = u'allocine_movies_' + date
+            print(collection_name, movie["id"])
+            # #delete_collection(collection_name, 5)
+            ref = db.collection(collection_name).document(str(movie.get("id", "none" )))
+            ref.set(movie, merge=True)
+            time.sleep(0.05)
+
 prep_data_for_website()
+upload_data_in_database()
