@@ -282,8 +282,8 @@ def prep_data_for_website():
 
     with open('classic_movies.json', 'w') as f:
         json.dump(classic_movies, f)
-    with open('../website_cine/data/classic_movies.json', 'w') as f:
-        json.dump(classic_movies, f)
+    #with open('../website_cine/data/classic_movies.json', 'w') as f:
+    #    json.dump(classic_movies, f)
 
 
 def delete_collection(coll_ref, batch_size):
@@ -300,6 +300,8 @@ def delete_collection(coll_ref, batch_size):
 
 def upload_data_in_database():
     #Use a service account
+    print("")
+    print("Uploading to the database!")
     cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
     firebase_admin.initialize_app(cred)
     db = firestore.client()
