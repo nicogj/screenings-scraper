@@ -4,6 +4,7 @@ from tqdm.auto import tqdm
 import json
 import pickle
 import time
+from datetime import datetime, timedelta
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
@@ -258,11 +259,14 @@ def prep_data_for_website():
             movie['date'] = [showtime.year, showtime.month, showtime.day]
             movie['id'] = movie_id
             movie['showtimes_theater'] = dict()
+            min_showtime = 24
             for theater in classic_movies[movie_id]['showtimes'][showtime].keys():
                 dict_theater_name = '{} ({})'.format(clean_theater_name(theaters[theater]['name']), \
                     transform_zipcode(theaters[theater]['zipcode']))
                 movie['showtimes_theater'][dict_theater_name] = \
                     [elem.hour + elem.minute/60 for elem in classic_movies[movie_id]['showtimes'][showtime][theater]]
+                min_showtime = min(min_showtime, min(movie['showtimes_theater'][dict_theater_name]))
+            movie['first_showtime'] = min_showtime
 
             showtimes = []
             for theater in classic_movies[movie_id]['showtimes'][showtime].keys():
@@ -302,6 +306,15 @@ def upload_data_in_database():
     #Use a service account
     print("")
     print("Uploading to the database!")
+    
+    #Get name_collection for the week 
+    start_time = datetime.today()+timedelta(days=2-datetime.today().weekday())
+    #We put dates from wednesday 00:00 to tuesday 23:00.
+    start_time = datetime(start_time.year, start_time.month, start_time.day)
+    end_time = start_time + timedelta(days=6, hours=23)
+    start_date_str = '_'.join([str(int) for int in [start_time.year, start_time.month, start_time.day]])
+    collection_name_week = u'allocine_movies_week_' + start_date_str
+
     cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
     firebase_admin.initialize_app(cred)
     db = firestore.client()
@@ -312,10 +325,17 @@ def upload_data_in_database():
             #dates are year_month_day
             date = '_'.join([str(int) for int in movie['date']])
             collection_name = u'allocine_movies_' + date
-            print(collection_name, movie["id"])
+            print(collection_name, movie["original_title"])
             #delete_collection(collection_name, 5)
             ref = db.collection(collection_name).document(str(movie.get("id", "none" )))
             ref.set(movie, merge=True)
+            movie_date = datetime(movie["date"][0], movie["date"][1], movie["date"][2])
+
+            if (start_time <= movie_date) and (end_time>=movie_date):
+                print("Movie playing the coming week.")
+                name_doc = str(movie.get("id", "none" )) + "_" + date
+                ref = db.collection(collection_name_week).document(name_doc)
+                ref.set(movie, merge=True)
             time.sleep(0.05)
 
 prep_data_for_website()
