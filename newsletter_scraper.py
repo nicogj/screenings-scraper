@@ -7,7 +7,11 @@ import urllib
 import numpy as np
 import json
 import time
+import sys
 import base64
+import math
+from PIL import Image
+from io import BytesIO
 from datetime import datetime, timedelta
 import firebase_admin
 from firebase_admin import credentials
@@ -79,6 +83,7 @@ def collecting_reviews_and_weeks():
 
 
     print("\nCOLLECTING REVIEWS:")
+    over1MB = 0
     date_list, image_list, image_file_list, category_list, movie_list, review_list, showtime_list, id_list\
          = [], [], [], [], [], [], [], []
     for date, link in links.items():
@@ -110,14 +115,23 @@ def collecting_reviews_and_weeks():
                 image_url = text.find(class_ = 'mcnImage').get('src')
                 id_l.append(current_id)
                 image_l.append(image_url)
-                print(image_url)
-                urllib.request.urlretrieve(image_url, "img/reviews/" + current_id + ".png")
-                img_byte = urllib.request.urlopen(image_url).read()
-                img_base64 = base64.b64encode(img_byte)
-                img_str = img_base64.decode('utf-8')
-                image_file_l.append(img_str)
-                i += 1
+                #urllib.request.urlretrieve(image_url, "img/reviews/" + current_id + ".png")
+                img = urllib.request.urlopen(image_url).read()
+                img = base64.b64encode(img)
+                if sys.getsizeof(img)>1048487:
+                    ratio = math.sqrt(sys.getsizeof(img)/1000000)+0.05
+                    urllib.request.urlretrieve(image_url, "img/reviews/" + current_id + ".png")
+                    img = Image.open("img/reviews/" + current_id + ".png")
+                    img = img.resize((int(img.size[0]/ratio), int(img.size[1]/ratio)))
+                    im_file = BytesIO()
+                    img.save(im_file, format="PNG")
+                    im_bytes = im_file.getvalue()  #im_bytes: image in binary format.
+                    img = base64.b64encode(im_bytes)
 
+                img = img.decode('utf-8')
+                image_file_l.append(img)
+                i += 1
+                
             date_list += date_l
             image_list += image_l
             image_file_list += image_file_l
@@ -205,8 +219,6 @@ def collecting_reviews_and_weeks():
             temp_dict[var] = reviews[var][i]
         json_export['review'].append(temp_dict)
 
-    #with open('../website_cine/data/reviews.json', 'w') as f:
-    #    json.dump(json_export, f)
     with open('data/reviews.json', 'w') as f:
         json.dump(json_export, f)
 
@@ -217,11 +229,8 @@ def collecting_reviews_and_weeks():
         for var in list(weeks):
             temp_dict[var] = weeks[var][i]
         json_export['week'].append(temp_dict)
-    #with open('../website_cine/data/weeks.json', 'w') as f:
-    #    json.dump(json_export, f)
     with open('data/weeks.json', 'w') as f:
         json.dump(json_export, f)
-
 
 def upload_data_in_database(db, file_name, key):
     print("")
