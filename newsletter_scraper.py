@@ -71,8 +71,8 @@ def collecting_reviews_and_weeks():
     for elem in soup.find_all(class_ = 'campaign'):
         links[elem.text[6:10]+"-"+elem.text[3:5]+"-"+elem.text[:2]] = elem.find('a').get('href')
 
-    links['2021-08-18'] = links['2021-08-19']
-    del links['2021-08-19']
+    #links['2021-08-18'] = links['2021-08-19']
+    #del links['2021-08-19']
 
     #links['2021-08-11'] = links['2021-08-12']
     #del links['2021-08-12']
@@ -237,6 +237,8 @@ def upload_data_in_database(db, file_name, key):
     print("Uploading to the database", key)
     with open(file_name) as file:
         movies = json.load(file)[key]
+        last_date = sorted([int(movie["date"].replace("-", "")) for movie in movies])[-1]
+        print("Last date", last_date)
         for movie in movies:
             year_review = movie["date"].split("-")[0]
             collection_name = key + year_review
@@ -245,9 +247,11 @@ def upload_data_in_database(db, file_name, key):
                 name_doc = str(date) + "_" + movie["category"].replace(" ", "_")
             else:
                 name_doc = str(date)
-            print(collection_name, name_doc)
-            ref = db.collection(collection_name).document(name_doc)
-            ref.set(movie, merge=True)
+            if date==last_date:
+                print("Pushing in DB!")
+                print(collection_name, name_doc)
+                ref = db.collection(collection_name).document(name_doc)
+                ref.set(movie, merge=True)
             time.sleep(0.05)
 
 
