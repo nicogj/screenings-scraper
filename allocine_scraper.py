@@ -1,3 +1,4 @@
+from hashlib import new
 from allocine import Allocine
 from datetime import datetime
 from tqdm.auto import tqdm
@@ -8,7 +9,8 @@ from datetime import datetime, timedelta
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
-
+import random
+import string
 
 def transform_zipcode(code):
     if str(code)[:2] == '75':
@@ -284,10 +286,19 @@ def prep_data_for_website():
     classic_movies = {}
     classic_movies['movies'] = movie_list
 
+    #Transform the dict into dicts of days !!
+    new_dict = dict()
+    for movie in classic_movies:
+        date = str(movie['date'][0]) + "_" + str(movie['date'][1]).zfill(2) \
+            + "_" + str(movie['date'][2]).zfill(2)
+        if date in new_dict:
+            new_dict[date].append(movie)
+        else:
+            new_dict[date] = [movie]
+    classic_movies = new_dict
+
     with open('classic_movies.json', 'w') as f:
         json.dump(classic_movies, f)
-    #with open('../website_cine/data/classic_movies.json', 'w') as f:
-    #    json.dump(classic_movies, f)
 
 
 def delete_collection(coll_ref, batch_size):
@@ -313,7 +324,7 @@ def upload_data_in_database():
     start_time = datetime(start_time.year, start_time.month, start_time.day)
     end_time = start_time + timedelta(days=6, hours=23)
     start_date_str = '_'.join([str(int) for int in [start_time.year, start_time.month, start_time.day]])
-    collection_name_week = u'allocine_movies_week_' + start_date_str
+    collection_name_week = u'movies_week_' + start_date_str
 
     cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
     firebase_admin.initialize_app(cred)
@@ -321,16 +332,18 @@ def upload_data_in_database():
 
     with open('classic_movies.json') as file:
         movies = json.load(file)["movies"]
-        for movie in movies:
-            #dates are year_month_day
-            date = '_'.join([str(int) for int in movie['date']])
-            collection_name = u'allocine_movies_' + date
-            print(collection_name, movie["original_title"])
-            #delete_collection(collection_name, 5)
-            ref = db.collection(collection_name).document(str(movie.get("id", "none" )))
-            ref.set(movie, merge=True)
+        
+        for date in tqdm(movies.keys()):
+            collection_name = u'movies'
+            ref = db.collection(collection_name).document(date)
+            ref.set({u'date': date}, merge=True)
+            ref.update({u'movies': movies[date]})
+            #ref.update({str(movie.get("id", "none" )): movie})
+            #ref.update(movie, merge=True)
+            #ref = db.collection(collection_name).document(str(movie.get("id", "none" )))
+            #ref.set(movie, merge=True)
+            
             movie_date = datetime(movie["date"][0], movie["date"][1], movie["date"][2])
-
             if (start_time <= movie_date) and (end_time>=movie_date):
                 print("Movie playing the coming week.")
                 name_doc = str(movie.get("id", "none" )) + "_" + date

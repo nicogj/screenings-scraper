@@ -4,9 +4,7 @@ from tqdm.auto import tqdm
 import pickle
 import time
 import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
-
+from firebase_admin import credentials, firestore
 
 def transform_zipcode(code):
     if str(code)[:2] == '75':
@@ -285,7 +283,7 @@ def prep_data_for_website():
     return classic_movies
     
 
-def upload_data_in_database():
+def main():
     #Create the movies dictionnary
     movies = prep_data_for_website()
 
@@ -321,3 +319,6 @@ def upload_data_in_database():
             ref = db.collection(collection_name_week).document(name_doc)
             ref.set(movie, merge=True)
         time.sleep(0.05)
+
+if __name__ == '__main__':
+    main()
