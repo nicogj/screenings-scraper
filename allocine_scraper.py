@@ -300,6 +300,23 @@ def prep_data_for_website():
     with open('classic_movies.json', 'w') as f:
         json.dump(classic_movies, f)
 
+def delete_some_collections():
+    cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+    listss = ["allocine_movies_2022_1_5", 
+    "allocine_movies_2022_1_4",
+    "allocine_movies_2022_2_21",
+    "allocine_movies_2022_2_6",
+    "allocine_movies_2022_2_7",
+    "allocine_movies_2022_2_8",
+    "allocine_movies_2022_4_20",
+    "allocine_movies_2022_4_21",
+    "allocine_movies_2022_4_22", 
+    "allocine_movies_2022_5_11"]
+    for coll_ref in listss:
+        delete_collection(coll_ref, batch_size=50)
+
 
 def delete_collection(coll_ref, batch_size):
     docs = db.collection(coll_ref).stream()
