@@ -288,7 +288,7 @@ def prep_data_for_website():
 
     #Transform the dict into dicts of days !!
     new_dict = dict()
-    for movie in classic_movies:
+    for movie in classic_movies['movies']:
         date = str(movie['date'][0]) + "_" + str(movie['date'][1]).zfill(2) \
             + "_" + str(movie['date'][2]).zfill(2)
         if date in new_dict:
@@ -336,37 +336,41 @@ def upload_data_in_database():
     print("Uploading to the database!")
     
     #Get name_collection for the week 
-    start_time = datetime.today()+timedelta(days=2-datetime.today().weekday())
+    #start_time = datetime.today()+timedelta(days=2-datetime.today().weekday())
     #We put dates from wednesday 00:00 to tuesday 23:00.
-    start_time = datetime(start_time.year, start_time.month, start_time.day)
-    end_time = start_time + timedelta(days=6, hours=23)
-    start_date_str = '_'.join([str(int) for int in [start_time.year, start_time.month, start_time.day]])
-    collection_name_week = u'movies_week_' + start_date_str
+    #start_time = datetime(start_time.year, start_time.month, start_time.day)
+    #end_time = start_time + timedelta(days=6, hours=23)
+    #start_date_str = '_'.join([str(int) for int in [start_time.year, start_time.month, start_time.day]])
+    #collection_name_week = u'movies_week_' + start_date_str
 
     cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
     firebase_admin.initialize_app(cred)
     db = firestore.client()
 
     with open('classic_movies.json') as file:
-        movies = json.load(file)["movies"]
+        movies = json.load(file)
         
         for date in tqdm(movies.keys()):
             collection_name = u'movies'
             ref = db.collection(collection_name).document(date)
             ref.set({u'date': date}, merge=True)
             ref.update({u'movies': movies[date]})
+            
+            #BEFORE
             #ref.update({str(movie.get("id", "none" )): movie})
             #ref.update(movie, merge=True)
             #ref = db.collection(collection_name).document(str(movie.get("id", "none" )))
             #ref.set(movie, merge=True)
             
-            movie_date = datetime(movie["date"][0], movie["date"][1], movie["date"][2])
-            if (start_time <= movie_date) and (end_time>=movie_date):
-                print("Movie playing the coming week.")
-                name_doc = str(movie.get("id", "none" )) + "_" + date
-                ref = db.collection(collection_name_week).document(name_doc)
-                ref.set(movie, merge=True)
-            time.sleep(0.05)
+            # movie = movies[date]
+            # print(movie)
+            # movie_date = datetime(movie["date"][0], movie["date"][1], movie["date"][2])
+            # if (start_time <= movie_date) and (end_time>=movie_date):
+            #     print("Movie playing the coming week.")
+            #     name_doc = str(movie.get("id", "none" )) + "_" + date
+            #     ref = db.collection(collection_name_week).document(name_doc)
+            #     ref.set(movie, merge=True)
+            # time.sleep(0.05)
 
 prep_data_for_website()
 upload_data_in_database()
