@@ -1,16 +1,12 @@
-from hashlib import new
 from allocine import Allocine
 from datetime import datetime
 from tqdm.auto import tqdm
 import json
 import pickle
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
-import random
-import string
+from firebase_admin import credentials, firestore
 
 def transform_zipcode(code):
     if str(code)[:2] == '75':
