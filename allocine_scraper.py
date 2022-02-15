@@ -221,7 +221,7 @@ def allocine_scraper():
 ######################
 def prep_data_for_website():
 
-    last_year = datetime.today().year - 3
+    last_year = datetime.today().year - 4
 
     classic_movies, theaters = allocine_scraper()
 
