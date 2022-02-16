@@ -12,7 +12,8 @@ import base64
 import math
 from PIL import Image
 from io import BytesIO
-from datetime import datetime, timedelta
+from datetime import datetime
+import time                
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
@@ -84,22 +85,27 @@ def collecting_reviews_and_weeks():
 
     print("\nCOLLECTING REVIEWS:")
     over1MB = 0
-    date_list, image_list, image_file_list, category_list, movie_list, review_list, showtime_list, id_list\
-         = [], [], [], [], [], [], [], []
+    date_list, year_list, month_list, time_list, image_list, image_file_list, category_list, movie_list, review_list, \
+        showtime_list, id_list = [], [], [], [], [], [], [], [], [], [], []
     for date, link in links.items():
 
         try:
             html = requests.get(link)
             soup = BeautifulSoup(html.content, 'html.parser')
 
-            date_l, image_l, image_file_l, category_l, movie_l, review_l, showtime_l, id_l\
-                 = [], [], [], [], [], [], [], []
+            date_l, year_l, month_l, time_l, image_l, image_file_l, category_l, movie_l, review_l, showtime_l, id_l\
+                 = [], [], [], [], [], [], [], [], [], [], []
 
             i=1
             texts = soup.findAll(class_ = 'mcnImageCardBlock')
             for text in texts:
+                datelist = date.split("-")
+                year, month = datelist[0], datelist[1]
+                dt = datetime.strptime(date, '%Y-%m-%d')
+                year_l.append(year)
+                month_l.append(month)
                 date_l.append(date)
-
+                time_l.append(str(int(time.mktime(dt.timetuple()))))
                 cat_movie = text.find('h3').text
 
                 if len(cat_movie.split('\n'))>1:
@@ -133,6 +139,9 @@ def collecting_reviews_and_weeks():
                 i += 1
                 
             date_list += date_l
+            month_list += month_l
+            year_list += year_l
+            time_list += time_l
             image_list += image_l
             image_file_list += image_file_l
             category_list += category_l
@@ -147,6 +156,9 @@ def collecting_reviews_and_weeks():
     reviews = pd.DataFrame({
         'id': id_list,
         'date': date_list,
+        'year': year_list,
+        'month': month_list,
+        'time': time_list, 
         'category': category_list,
         'movie': movie_list,
         'review': review_list,
@@ -180,20 +192,30 @@ def collecting_reviews_and_weeks():
 
 
     print("\nCOLLECTING WEEKS:")
-    date_list, name_list, week_list = [], [], []
+    date_list, year_list, month_list, time_list, name_list, week_list = [], [], [], [], [], []
     for date, link in links.items():
 
         try:
             html = requests.get(link)
             soup = BeautifulSoup(html.content, 'html.parser')
-            date_l, name_l, week_l = [], [], []
+            date_l, name_l, week_l, year_l, month_l, time_l = [], [], [], [], [], []
             weeks = soup.findAll(class_ = 'mcnBoxedTextBlock')
 
             for week in weeks:
+                datelist = date.split("-")
+                year, month = datelist[0], datelist[1]
+                dt = datetime.strptime(date, '%Y-%m-%d')
+                year_l.append(year)
+                month_l.append(month)
+                time_l.append(str(int(time.mktime(dt.timetuple()))))
+                
                 date_l.append(date)
                 name_l.append(week.find("h3").text)
                 week_l.append(str(week.find(class_="mcnTextContent").find("div")))
-
+                
+            year_list += year_l
+            month_list += month_l
+            time_list += time_l
             date_list += date_l
             name_list += name_l
             week_list += week_l
@@ -202,6 +224,9 @@ def collecting_reviews_and_weeks():
             print('{} Failed'.format(date))
 
     weeks = pd.DataFrame({
+        'year': year_list,
+        'month': month_list, 
+        'time': time_list,
         'date': date_list,
         'name': name_list,
         'week': week_list,
@@ -212,23 +237,23 @@ def collecting_reviews_and_weeks():
 
     print("\nExporting")
     json_export = {}
-    json_export['review'] = []
+    json_export['reviews'] = []
     for i in range(reviews.shape[0]):
         temp_dict = {}
         for var in list(reviews):
             temp_dict[var] = reviews[var][i]
-        json_export['review'].append(temp_dict)
+        json_export['reviews'].append(temp_dict)
 
     with open('data/reviews.json', 'w') as f:
         json.dump(json_export, f)
 
     json_export = {}
-    json_export['week'] = []
+    json_export['weeks'] = []
     for i in range(weeks.shape[0]):
         temp_dict = {}
         for var in list(weeks):
             temp_dict[var] = weeks[var][i]
-        json_export['week'].append(temp_dict)
+        json_export['weeks'].append(temp_dict)
     with open('data/weeks.json', 'w') as f:
         json.dump(json_export, f)
 
@@ -237,11 +262,8 @@ def upload_data_in_database(db, file_name, key):
     print("Uploading to the database", key)
     with open(file_name) as file:
         movies = json.load(file)[key]
-        last_date = sorted([int(movie["date"].replace("-", "")) for movie in movies])[-1]
-        print("Last date", last_date)
         for movie in movies:
-            year_review = movie["date"].split("-")[0]
-            collection_name = key + year_review
+            last_date = sorted([movie["date"] for movie in movies])[-1]
             date = int(movie["date"].replace("-", ""))
             if key=="review":
                 name_doc = str(date) + "_" + movie["category"].replace(" ", "_")
@@ -249,8 +271,8 @@ def upload_data_in_database(db, file_name, key):
                 name_doc = str(date)
             if date==last_date:
                 print("Pushing in DB!")
-                print(collection_name, name_doc)
-                ref = db.collection(collection_name).document(name_doc)
+                print(key, name_doc)
+                ref = db.collection(key).document()
                 ref.set(movie, merge=True)
             time.sleep(0.05)
 
@@ -259,5 +281,5 @@ collecting_reviews_and_weeks()
 cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
 firebase_admin.initialize_app(cred)
 db = firestore.client()
-upload_data_in_database(db, "data/reviews.json", "review")
-upload_data_in_database(db, "data/weeks.json", "week")
+upload_data_in_database(db, "data/reviews.json", "reviews")
+upload_data_in_database(db, "data/weeks.json", "weeks")
