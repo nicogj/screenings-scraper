@@ -5,7 +5,7 @@ from firebase_admin import credentials, firestore
 
 from collections import OrderedDict
 from dataclasses import dataclass
-from datetime import datetime, timedelta, date, time
+from datetime import datetime, timedelta, date
 import logging
 import re
 from typing import List, Optional
@@ -903,7 +903,7 @@ def prep_data_for_website():
     return classic_movies
     
 
-def main():
+def main(event, context):
     #Create the movies dictionnary
     movies = prep_data_for_website()
 
@@ -918,6 +918,3 @@ def main():
         ref = db.collection(collection_name).document(date)
         ref.set({u'date': date}, merge=True)
         ref.update({u'movies': movies[date]})
-
-if __name__ == '__main__':
-    main()
