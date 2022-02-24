@@ -262,16 +262,10 @@ def upload_data_in_database(db, file_name, key):
     print("Uploading to the database", key)
     with open(file_name) as file:
         movies = json.load(file)[key]
+        last_date = sorted([movie["date"] for movie in movies])[-1]
         for movie in movies:
-            last_date = sorted([movie["date"] for movie in movies])[-1]
-            date = int(movie["date"].replace("-", ""))
-            if key=="review":
-                name_doc = str(date) + "_" + movie["category"].replace(" ", "_")
-            else:
-                name_doc = str(date)
-            if date==last_date:
-                print("Pushing in DB!")
-                print(key, name_doc)
+            if last_date==movie["date"]:
+                print("Pushing in DB!", movie["date"])
                 ref = db.collection(key).document()
                 ref.set(movie, merge=True)
             time.sleep(0.05)
