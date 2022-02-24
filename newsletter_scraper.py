@@ -246,16 +246,16 @@ def collecting_reviews_and_weeks():
     with open('data/weeks.json', 'w') as f:
         json.dump(json_export, f)
 
-def upload_data_in_database(db, file_name, key, overwrite=False):
+def upload_data_in_database(db, file_name, key):
     print("")
     print("Uploading to the database", key)
     with open(file_name) as file:
         movies = json.load(file)[key]
         last_date = sorted([movie["date"] for movie in movies])[-1]
         for movie in movies:
-            if overwrite or last_date==movie["date"]:
+            if last_date==movie["date"]:
                 print("Pushing in DB!", movie["date"])
-                ref = db.collection(key).document()
+                ref = db.collection(key).document(movie["date"]+"_"+key)
                 ref.set(movie, merge=True)
             time.sleep(0.05)
 
