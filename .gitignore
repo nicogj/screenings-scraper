@@ -1,5 +1,6 @@
 # Folders and files
 data/**/*.pkl
+img/**/*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

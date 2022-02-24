@@ -13,7 +13,7 @@ import math
 from PIL import Image
 from io import BytesIO
 from datetime import datetime
-import time                
+import time
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
@@ -72,17 +72,6 @@ def collecting_reviews_and_weeks():
     for elem in soup.find_all(class_ = 'campaign'):
         links[elem.text[6:10]+"-"+elem.text[3:5]+"-"+elem.text[:2]] = elem.find('a').get('href')
 
-    #links['2021-08-18'] = links['2021-08-19']
-    #del links['2021-08-19']
-
-    #links['2021-08-11'] = links['2021-08-12']
-    #del links['2021-08-12']
-
-    for elem in links.keys():
-        if datetime.strptime(elem, "%Y-%m-%d").date().weekday() != 2:
-            print("clean up {} (must be a Wednesday)".format(elem))
-
-
     print("\nCOLLECTING REVIEWS:")
     over1MB = 0
     date_list, year_list, month_list, time_list, image_list, image_file_list, category_list, movie_list, review_list, \
@@ -93,8 +82,7 @@ def collecting_reviews_and_weeks():
             html = requests.get(link)
             soup = BeautifulSoup(html.content, 'html.parser')
 
-            date_l, year_l, month_l, time_l, image_l, image_file_l, category_l, movie_l, review_l, showtime_l, id_l\
-                 = [], [], [], [], [], [], [], [], [], [], []
+            date_l, year_l, month_l, time_l, image_l, image_file_l, category_l, movie_l, review_l, showtime_l, id_l = [], [], [], [], [], [], [], [], [], [], []
 
             i=1
             texts = soup.findAll(class_ = 'mcnImageCardBlock')
@@ -121,13 +109,12 @@ def collecting_reviews_and_weeks():
                 image_url = text.find(class_ = 'mcnImage').get('src')
                 id_l.append(current_id)
                 image_l.append(image_url)
-                #urllib.request.urlretrieve(image_url, "img/reviews/" + current_id + ".png")
                 img = urllib.request.urlopen(image_url).read()
                 img = base64.b64encode(img)
                 if sys.getsizeof(img)>1048487:
                     ratio = math.sqrt(sys.getsizeof(img)/1000000)+0.05
-                    urllib.request.urlretrieve(image_url, "img/reviews/" + current_id + ".png")
-                    img = Image.open("img/reviews/" + current_id + ".png")
+                    urllib.request.urlretrieve(image_url, "img/" + current_id + ".png")
+                    img = Image.open("img/" + current_id + ".png")
                     img = img.resize((int(img.size[0]/ratio), int(img.size[1]/ratio)))
                     im_file = BytesIO()
                     img.save(im_file, format="PNG")
@@ -137,7 +124,7 @@ def collecting_reviews_and_weeks():
                 img = img.decode('utf-8')
                 image_file_l.append(img)
                 i += 1
-                
+
             date_list += date_l
             month_list += month_l
             year_list += year_l
@@ -158,7 +145,7 @@ def collecting_reviews_and_weeks():
         'date': date_list,
         'year': year_list,
         'month': month_list,
-        'time': time_list, 
+        'time': time_list,
         'category': category_list,
         'movie': movie_list,
         'review': review_list,
@@ -184,6 +171,9 @@ def collecting_reviews_and_weeks():
     reviews.loc[
         (reviews['movie']=="Mother,\u00a0Bong Joon Ho\u00a0(2009)")&(reviews['date']=="2021-08-18"), 'review'
     ] = "<blockquote>\u00ab&nbsp;Malgr\u00e9 ces ruptures de tons et de genres, malgr\u00e9 ses constantes surprises psychologiques et sc\u00e9naristiques, <em>Mother</em> garde le cap tendu de son suspense polaro-filial et maintient une tenue formelle impeccable&nbsp;: beaut\u00e9 des plans, virtuosit\u00e9 du montage, des changements d\u2019intensit\u00e9, des glissements entre burlesque et tragique.&nbsp;\u00bb</blockquote><blockquote style=\"text-align: right;\">- <a href=\"https://www.lesinrocks.com/cinema/mother-25894-22-01-2010/\"target=\"_blank\">Serge Kaganski, Les Inrockuptibles, 2010</a></blockquote>"
+    reviews.loc[
+        (reviews['movie']=="Hotel by the River, Hong Sang-Soo\u00a0(2018)")&(reviews['date']=="2022-02-16"), 'review'
+    ] = "Un po\u00e8te qui sent la mort s\u2019approcher a donn\u00e9 rendez-vous \u00e0 ses fils dans un h\u00f4tel au bord d\u2019une rivi\u00e8re. Les retrouvailles sont difficiles&nbsp;: au sens propre (ils ne parviennent pas \u00e0 se retrouver dans le restaurant de l\u2019h\u00f4tel) comme au figur\u00e9 (il y a un je-ne-sais-quoi de distendu dans les relations entre le p\u00e8re et ses fils). Comme souvent chez Hong Sang-Soo (ou comme souvent, tout court), les langues se d\u00e9lient autour d\u2019un verre. L\u2019alcool est ce moteur schizophr\u00e9nique de la discussion qui r\u00e9v\u00e8le autant qu\u2019il fait oublier. Certaines choses s\u2019\u00e9chappent, bien d\u2019autres s\u2019effacent\u2026 Pendant ce temps dans le m\u00eame h\u00f4tel, une jeune femme, accompagn\u00e9e d\u2019une amie, pleure la fin de son couple. L\u2019\u00e9crivain partage un moment avec elles, leur r\u00e9cite un po\u00e8me qui les apaise. Mais l\u2019art n\u2019est pas un moyen de r\u00e9demption. Au mieux, il permet de saisir l\u2019inexorable fuite du temps et les regrets qui en d\u00e9coulent. Hong Sang-Soo nous le prouve ici mieux que quiconque."
 
     reviews['movie_name'] = reviews['movie'].apply(lambda x: ','.join(x.split(',')[:-1]))
     reviews['movie_directors'] = reviews['movie'].apply(lambda x: re.sub('\(.+\)', '', x.split(',')[-1]).strip())
@@ -208,11 +198,10 @@ def collecting_reviews_and_weeks():
                 year_l.append(year)
                 month_l.append(month)
                 time_l.append(str(int(time.mktime(dt.timetuple()))))
-                
                 date_l.append(date)
                 name_l.append(week.find("h3").text)
                 week_l.append(str(week.find(class_="mcnTextContent").find("div")))
-                
+
             year_list += year_l
             month_list += month_l
             time_list += time_l
@@ -225,7 +214,7 @@ def collecting_reviews_and_weeks():
 
     weeks = pd.DataFrame({
         'year': year_list,
-        'month': month_list, 
+        'month': month_list,
         'time': time_list,
         'date': date_list,
         'name': name_list,
@@ -257,25 +246,18 @@ def collecting_reviews_and_weeks():
     with open('data/weeks.json', 'w') as f:
         json.dump(json_export, f)
 
-def upload_data_in_database(db, file_name, key):
+def upload_data_in_database(db, file_name, key, overwrite=False):
     print("")
     print("Uploading to the database", key)
     with open(file_name) as file:
         movies = json.load(file)[key]
+        last_date = sorted([movie["date"] for movie in movies])[-1]
         for movie in movies:
-            last_date = sorted([movie["date"] for movie in movies])[-1]
-            date = int(movie["date"].replace("-", ""))
-            if key=="review":
-                name_doc = str(date) + "_" + movie["category"].replace(" ", "_")
-            else:
-                name_doc = str(date)
-            if date==last_date:
-                print("Pushing in DB!")
-                print(key, name_doc)
+            if overwrite or last_date==movie["date"]:
+                print("Pushing in DB!", movie["date"])
                 ref = db.collection(key).document()
                 ref.set(movie, merge=True)
             time.sleep(0.05)
-
 
 collecting_reviews_and_weeks()
 cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
