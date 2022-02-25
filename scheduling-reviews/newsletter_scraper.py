@@ -5,11 +5,11 @@ from datetime import datetime
 import re
 import urllib
 import numpy as np
-import json
 import time
 import sys
 import base64
 import math
+import io
 from PIL import Image
 from io import BytesIO
 from datetime import datetime
@@ -65,7 +65,6 @@ def collecting_reviews_and_weeks():
     base_url = 'https://us6.campaign-archive.com/home/?u=00a9245e71d3375ef4542a588&id=3270cdb251'
 
     html = requests.get(base_url)
-    print(html.status_code)
     soup = BeautifulSoup(html.content, 'html.parser')
 
     links = {}
@@ -109,17 +108,16 @@ def collecting_reviews_and_weeks():
                 image_url = text.find(class_ = 'mcnImage').get('src')
                 id_l.append(current_id)
                 image_l.append(image_url)
-                img = urllib.request.urlopen(image_url).read()
-                img = base64.b64encode(img)
-                if sys.getsizeof(img)>1048487:
+                img_bytes = urllib.request.urlopen(image_url).read()
+                img = base64.b64encode(img_bytes)
+                if sys.getsizeof(img)>908487:
                     ratio = math.sqrt(sys.getsizeof(img)/1000000)+0.05
-                    urllib.request.urlretrieve(image_url, "img/" + current_id + ".png")
-                    img = Image.open("img/" + current_id + ".png")
+                    img = Image.open(io.BytesIO(img_bytes))
                     img = img.resize((int(img.size[0]/ratio), int(img.size[1]/ratio)))
                     im_file = BytesIO()
                     img.save(im_file, format="PNG")
-                    im_bytes = im_file.getvalue()  #im_bytes: image in binary format.
-                    img = base64.b64encode(im_bytes)
+                    img = im_file.getvalue()
+                    img = base64.b64encode(img)
 
                 img = img.decode('utf-8')
                 image_file_l.append(img)
@@ -225,47 +223,46 @@ def collecting_reviews_and_weeks():
 
 
     print("\nExporting")
-    json_export = {}
-    json_export['reviews'] = []
+    json_export_reviews = {}
+    json_export_reviews['reviews'] = []
     for i in range(reviews.shape[0]):
         temp_dict = {}
         for var in list(reviews):
             temp_dict[var] = reviews[var][i]
-        json_export['reviews'].append(temp_dict)
-
-    with open('data/reviews.json', 'w') as f:
-        json.dump(json_export, f)
-
-    json_export = {}
-    json_export['weeks'] = []
+        json_export_reviews['reviews'].append(temp_dict)
+    
+    json_export_weeks = {}
+    json_export_weeks['weeks'] = []
     for i in range(weeks.shape[0]):
         temp_dict = {}
         for var in list(weeks):
             temp_dict[var] = weeks[var][i]
-        json_export['weeks'].append(temp_dict)
-    with open('data/weeks.json', 'w') as f:
-        json.dump(json_export, f)
+        json_export_weeks['weeks'].append(temp_dict)
+    
+    return json_export_reviews, json_export_weeks
 
-def upload_data_in_database(db, file_name, key):
+def upload_data_in_database(db, data, key):
     print("")
     print("Uploading to the database", key)
-    with open(file_name) as file:
-        movies = json.load(file)[key]
-        last_date = sorted([movie["date"] for movie in movies])[-1]
-        for movie in movies:
-            if True : #last_date==movie["date"]:
-                if key=="reviews":
-                    doc_name = movie["date"] + "_" + movie["category"]
-                else:
-                    doc_name = movie["date"]
-                print("Pushing in DB!", doc_name)
-                ref = db.collection(key).document(doc_name)
-                ref.set(movie, merge=True)
-            time.sleep(0.05)
+    data = data[key]
+    last_date = sorted([movie["date"] for movie in data])[-1]
+    for movie in data:
+        if last_date==movie["date"]:
+            if key=="reviews":
+                doc_name = movie["date"] + "_" + movie["category"]
+            else:
+                doc_name = movie["date"]
+            print("Pushing in DB!", doc_name)
+            ref = db.collection(key).document(doc_name)
+            ref.set(movie, merge=True)
+        time.sleep(0.05)
 
-collecting_reviews_and_weeks()
-cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
-firebase_admin.initialize_app(cred)
-db = firestore.client()
-upload_data_in_database(db, "data/reviews.json", "reviews")
-upload_data_in_database(db, "data/weeks.json", "weeks")
+
+def main(event, context):
+    json_export_reviews, json_export_weeks = collecting_reviews_and_weeks()
+    if not firebase_admin._apps:
+        cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
+        firebase_admin.initialize_app(cred)
+    db = firestore.client()
+    upload_data_in_database(db, json_export_reviews, "reviews")
+    upload_data_in_database(db, json_export_weeks, "weeks")
