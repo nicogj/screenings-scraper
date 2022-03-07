@@ -257,6 +257,12 @@ def upload_data_in_database(db, data, key):
             ref.set(movie, merge=True)
         time.sleep(0.05)
 
+def upload_the_list_of_movies(db, data):
+    print("Pushing in DB the list of movies")
+    movies = dict([(movie["movie_name"], movie["category"]) for movie in data["reviews"] \
+        if movie["category"]=="COUP DE CŒUR"])
+    ref = db.collection("reviews").document("all_movies")
+    ref.set(movies, merge=True)
 
 def main(event, context):
     json_export_reviews, json_export_weeks = collecting_reviews_and_weeks()
@@ -266,3 +272,6 @@ def main(event, context):
     db = firestore.client()
     upload_data_in_database(db, json_export_reviews, "reviews")
     upload_data_in_database(db, json_export_weeks, "weeks")
+    upload_the_list_of_movies(db, json_export_reviews)
+
+main(None, None)
