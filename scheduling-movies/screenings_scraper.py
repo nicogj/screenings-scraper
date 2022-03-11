@@ -1,8 +1,6 @@
 from allocine import Allocine
 from datetime import datetime
 from tqdm.auto import tqdm
-import json
-import pickle
 import time
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -41,7 +39,7 @@ def get_movies():
 
         for showtime in theater_data.showtimes:
 
-            movie_id = showtime.movie.movie_id
+            movie_id = str(showtime.movie.movie_id)
             date = str(showtime.date.year) + "_" + str(showtime.date.month).zfill(2) + "_" + str(showtime.date.day).zfill(2)
             theater_id = theater # this might change as we leave Allocine
 
@@ -64,7 +62,7 @@ def get_movies():
 
             movies[movie_id]['screenings'][date][theater_id]['showtimes'].append(showtime.date_time.hour+showtime.date_time.minute/60)
             movies[movie_id]['screenings'][date][theater_id]['showtimes'] = list(set(
-                tuple(i) for i in movies[movie_id]['screenings'][date][theater_id]['showtimes']
+                movies[movie_id]['screenings'][date][theater_id]['showtimes']
             ))
 
     return movies
@@ -139,3 +137,32 @@ def date_level_data_for_website(movies):
                 movie['showtimes_theater'][theater] = add_theater_feats(movie['showtimes_theater'][theater])
 
     return by_date
+
+
+def main(event, context):
+    print("Creating the data!")
+    movies = get_movies()
+    #keys: films ids; values: dicts
+    movies_data = movie_level_data_for_website(movies)
+    #keys: dates; values: dicts{date:date, movies:list of movies}
+    dates_data = date_level_data_for_website(movies)
+    
+    print("")
+    print("Uploading to the database!")
+    cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+
+    for date in dates_data.keys():
+        db.collection(u'data_per_date').document(date).set(dates_data[date])
+        # ref = db.collection(u'dates_data').document(date)
+        # ref.set({u'date': date}, merge=True)
+        # ref.update({u'movies': movies[date]})
+        time.sleep(0.05)
+
+    for movie_id in movies_data.keys():
+        db.collection(u'data_per_movie').document(movie_id).set(movies_data[movie_id])
+        time.sleep(0.05)
+
+
+main(None, None)

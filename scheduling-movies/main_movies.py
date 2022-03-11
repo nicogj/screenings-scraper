@@ -625,17 +625,9 @@ def _strip_accents(s):
 
 
 
-
-def transform_zipcode(code):
-    if str(code)[:2] == '75':
-        arr = int(code) - 75000
-        if arr == 1:
-            arr = str(arr) + "er"
-        else:
-            arr = str(arr) + "ème"
-        return arr
-    else:
-        return str(code)
+######################
+#SCRAPER UTILS########
+######################
 
 def get_theater_codes():
 
@@ -723,6 +715,33 @@ def get_theater_codes():
 
     return theater_codes
 
+def transform_zipcode(code):
+    if str(code)[:2] == '75':
+        arr = int(code) - 75000
+        if arr == 1:
+            arr_name = str(arr) + "er"
+        else:
+            arr_name = str(arr) + "ème"
+        if arr in [1, 2, 3, 4]:
+            arr_cat = "Paris 1, 2, 3, 4"
+        elif arr in [5, 6, 7]:
+            arr_cat = "Paris 5, 6, 7"
+        elif arr in [8, 17]:
+            arr_cat = "Paris 8 & 17"
+        elif arr in [9, 10, 18, 19]:
+            arr_cat = "Paris 9, 10, 18, 19"
+        elif arr in [11, 12, 20]:
+            arr_cat = "Paris 11, 12, 20"
+        elif arr in [13, 14]:
+            arr_cat = "Paris 13 & 14"
+        elif arr in [15, 16]:
+            arr_cat = "Paris 15 & 16"
+        else:
+            arr_cat = "Paris {}".format(arr)
+        return arr_name, arr_cat
+    else:
+        return str(code), "Extramuros"
+
 def clean_theater_name(name):
     if name == "Christine Cinéma Club (Christine 21)":
         name = "Christine Cinéma Club"
@@ -745,6 +764,11 @@ def clean_theater_name(name):
     name = name.strip()
     return name
 
+def get_sort_name(name):
+
+    return name.split(" ")[-1] + ", " + " ".join(name.split(" ")[:-1])
+
+
 def good_movie(movie):
     children_movies = [
         "Wallace & Gromit : Cœurs à modeler",
@@ -761,160 +785,168 @@ def good_movie(movie):
     else:
         return True
 
+
 ######################
 #ALLOCINE SCRAPER#####
 ######################
-def save_obj(obj, filename):
-    with open(filename, 'wb') as f:
-        pickle.dump(obj, f)
+def theater_scraper(theater_code):
 
-def allocine_scraper():
     allocine = Allocine()
-    theater_codes = get_theater_codes()
+    try_nb = 0
+    while try_nb < 5:
+        try:
+            theater_data = allocine.get_theater(theater_code)
+            break
+        except:
+            try_nb += 1
+            print("Trying again for {}".format(theater_code))
+            time.sleep(5)
+    if try_nb==5:
+        print("Could not fetch theater {}".format(theater_code))
+        print("Please check https://www.allocine.fr/seance/salle_gen_csalle={}.html to see if we're missing out.".format(theater_code))
+        theater_data = None
 
+    return theater_data
+
+def get_movies():
+
+    theaters = get_theater_codes()
     movies = {}
-    theater_info = {}
 
-    for theater_code in theater_codes:
-        try_nb = 0
-        while try_nb < 5:
-            try:
-                theater = allocine.get_theater(theater_code)
-                break
-            except:
-                try_nb += 1
-                print("Trying again for {}".format(theater_code))
-                time.sleep(5)
-        if try_nb==5:
-            print("Could not fetch theater {}".format(theater_code))
-            print("Please check https://www.allocine.fr/seance/salle_gen_csalle={}.html to see if we're missing out.".format(theater_code))
+    for theater in tqdm(theaters):
+
+        theater_data = theater_scraper(theater)
+
+        if theater_data is None:
             continue
 
-        theater_info[theater_code] = {}
-        theater_info[theater_code]['name'] = theater.name
-        theater_info[theater_code]['address'] = theater.address
-        theater_info[theater_code]['city'] = theater.city
-        theater_info[theater_code]['zipcode'] = theater.zipcode
+        for showtime in theater_data.showtimes:
 
-        for showtime in theater.showtimes:
+            movie_id = showtime.movie.movie_id
+            date = str(showtime.date.year) + "_" + str(showtime.date.month).zfill(2) + "_" + str(showtime.date.day).zfill(2)
+            theater_id = theater # this might change as we leave Allocine
 
-            if showtime.movie.movie_id not in movies:
-                movies[showtime.movie.movie_id] = {}
-                movies[showtime.movie.movie_id]['title'] = showtime.movie.title
-                movies[showtime.movie.movie_id]['original_title'] = showtime.movie.original_title
-                movies[showtime.movie.movie_id]['duration'] = showtime.movie.duration
-                if showtime.movie.year==None:
-                    showtime.movie.year=datetime.today().year
-                movies[showtime.movie.movie_id]['year'] = showtime.movie.year
-                movies[showtime.movie.movie_id]['directors'] = showtime.movie.directors
-                movies[showtime.movie.movie_id]['language'] = showtime.movie.language
-                movies[showtime.movie.movie_id]['screen_format'] = showtime.movie.screen_format
-                movies[showtime.movie.movie_id]['id'] = showtime.movie.movie_id
-                movies[showtime.movie.movie_id]['showtimes'] = {}
+            if movie_id not in movies:
+                movies[movie_id] = {}
+                var = 'year'
+                for key in ['title', 'original_title', 'year', 'directors', 'language']:
+                    movies[movie_id][key] = vars(showtime.movie)[key]
+                movies[movie_id]['duration'] = None if showtime.movie.duration is None else showtime.movie.duration.seconds
+                movies[movie_id]['screenings'] = {}
 
-            if showtime.date not in movies[showtime.movie.movie_id]['showtimes']:
-                movies[showtime.movie.movie_id]['showtimes'][showtime.date] = {}
-            if theater_code not in movies[showtime.movie.movie_id]['showtimes'][showtime.date]:
-                movies[showtime.movie.movie_id]['showtimes'][showtime.date][theater_code] = []
+            if date not in movies[movie_id]['screenings']:
+                movies[movie_id]['screenings'][date] = {}
 
-            movies[showtime.movie.movie_id]['showtimes'][showtime.date][theater_code].append(showtime.date_time)
-            movies[showtime.movie.movie_id]['showtimes'][showtime.date][theater_code] = list(
-                set(movies[showtime.movie.movie_id]['showtimes'][showtime.date][theater_code])
-            )
+            if theater_id not in movies[movie_id]['screenings'][date]:
+                movies[movie_id]['screenings'][date][theater_id] = {}
+                for key in ['name', 'address', 'city', 'zipcode']:
+                    movies[movie_id]['screenings'][date][theater_id][key] = vars(theater_data)[key]
+                movies[movie_id]['screenings'][date][theater_id]['showtimes'] = []
 
-    return movies, theater_info
+            movies[movie_id]['screenings'][date][theater_id]['showtimes'].append(showtime.date_time.hour+showtime.date_time.minute/60)
+            movies[movie_id]['screenings'][date][theater_id]['showtimes'] = list(set(
+                tuple(i) for i in movies[movie_id]['screenings'][date][theater_id]['showtimes']
+            ))
 
-######################
-#PREP DATA FOR WEBSITE
-######################
-def prep_data_for_website():
+    return movies
 
+def subset_to_classic_movies(movies):
     last_year = datetime.today().year - 4
-
-    classic_movies, theaters = allocine_scraper()
-
+    classic_movies = movies.copy()
+    classic_movies = {
+        k: v for k, v in classic_movies.items() if v['directors'] != None
+    }
+    classic_movies = {
+        k: v for k, v in classic_movies.items() if v['year'] != None
+    }
     classic_movies = {
         k: v for k, v in classic_movies.items() if v['year'] <= last_year
     }
     classic_movies = {
-        k: v for k, v in classic_movies.items() if len(v['showtimes'].keys()) > 0
+        k: v for k, v in classic_movies.items() if len(v['screenings'].keys()) > 0
     }
     classic_movies = {
         k: v for k, v in classic_movies.items() if good_movie(v)
     }
-
-    classic_movies = {k: v for k, v in sorted(classic_movies.items(), key=lambda item: item[1]['year'])}
-    for movie in classic_movies.keys():
-        classic_movies[movie]['showtimes'] = {
-            k: classic_movies[movie]['showtimes'][k] for k in sorted(classic_movies[movie]['showtimes'])
-        }
-        for showdate in classic_movies[movie]['showtimes'].keys():
-            for theater in classic_movies[movie]['showtimes'][showdate].keys():
-                classic_movies[movie]['showtimes'][showdate][theater] = sorted(
-                    classic_movies[movie]['showtimes'][showdate][theater]
-                )
-
-    movie_list = []
-    for movie_id in classic_movies.keys():
-        for showtime in classic_movies[movie_id]['showtimes']:
-            movie = {}
-            movie['title'] = classic_movies[movie_id]['title']
-            movie['original_title'] = classic_movies[movie_id]['original_title']
-            movie['directors'] = classic_movies[movie_id]['directors']
-            movie['year'] = classic_movies[movie_id]['year']
-            movie['date'] = [showtime.year, showtime.month, showtime.day]
-            movie['id'] = movie_id
-            movie['showtimes_theater'] = dict()
-            min_showtime = 24
-            for theater in classic_movies[movie_id]['showtimes'][showtime].keys():
-                dict_theater_name = '{} ({})'.format(clean_theater_name(theaters[theater]['name']), \
-                    transform_zipcode(theaters[theater]['zipcode']))
-                movie['showtimes_theater'][dict_theater_name] = \
-                    [elem.hour + elem.minute/60 for elem in classic_movies[movie_id]['showtimes'][showtime][theater]]
-                min_showtime = min(min_showtime, min(movie['showtimes_theater'][dict_theater_name]))
-            movie['first_showtime'] = min_showtime
-
-            showtimes = []
-            for theater in classic_movies[movie_id]['showtimes'][showtime].keys():
-                showtimes.append('{} ({}): {}'.format(
-                    clean_theater_name(theaters[theater]['name']),
-                    transform_zipcode(theaters[theater]['zipcode']),
-                    ', '.join([
-                        str(elem.hour)+'h'+str(elem.minute).zfill(2)
-                        for elem in classic_movies[movie_id]['showtimes'][showtime][theater]
-                    ])
-                ))
-            movie['showtimes'] = '<br>'.join(showtimes)
-
-            movie_list.append(movie)
-    classic_movies = {}
-    classic_movies['movies'] = movie_list
-
-    #Transform the dict into dicts of days !!
-    new_dict = dict()
-    for movie in classic_movies['movies']:
-        date = str(movie['date'][0]) + "_" + str(movie['date'][1]).zfill(2) \
-            + "_" + str(movie['date'][2]).zfill(2)
-        if date in new_dict:
-            new_dict[date].append(movie)
-        else:
-            new_dict[date] = [movie]
-    classic_movies = new_dict
     return classic_movies
-    
+
+######################
+#PREP DATA FOR WEBSITE
+######################
+
+def add_movie_feats(movie):
+    movie['director_sort_name'] = get_sort_name(movie['directors'])
+    return movie
+
+def add_theater_feats(theater):
+    theater['clean_name'] = clean_theater_name(theater['name'])
+    theater['zipcode_clean'], theater['location_1'], theater['location_2'] = transform_zipcode(theater['zipcode'])
+    return theater
+
+def movie_level_data_for_website(movies):
+
+    classic_movies = subset_to_classic_movies(movies)
+    by_movie = classic_movies.copy()
+
+    # Additional variables:
+    for movie in by_movie.keys():
+        by_movie[movie] = add_movie_feats(by_movie[movie])
+        for date in by_movie[movie]['screenings'].keys():
+            for theater in by_movie[movie]['screenings'][date].keys():
+                by_movie[movie]['screenings'][date][theater] = add_theater_feats(by_movie[movie]['screenings'][date][theater])
+
+    return by_movie
+
+
+def date_level_data_for_website(movies):
+
+    classic_movies = subset_to_classic_movies(movies)
+    by_date = {}
+    for movie in classic_movies.keys():
+        for date in classic_movies[movie]['screenings'].keys():
+            if date not in by_date:
+                by_date[date] = {}
+                by_date[date]['date'] = date
+                by_date[date]['movies'] = []
+            by_date[date]['movies'].append(classic_movies[movie].copy())
+            by_date[date]['movies'][-1]['showtimes_theater'] = classic_movies[movie]['screenings'][date].copy()
+            del by_date[date]['movies'][-1]['screenings']
+
+    # Additional variables:
+    for date in by_date.keys():
+        for movie in by_date[date]['movies']:
+            movie = add_movie_feats(movie)
+            for theater in movie['showtimes_theater']:
+                movie['showtimes_theater'][theater] = add_theater_feats(movie['showtimes_theater'][theater])
+
+    return by_date
+
+
+##################
+####UPDATE DB#####
+##################
 
 def main(event, context):
-    #Create the movies dictionnary
-    movies = prep_data_for_website()
-
+    print("Creating the data!")
+    movies = get_movies()
+    #keys: films ids; values: dicts
+    movies_data = movie_level_data_for_website(movies)
+    #keys: dates; values: dicts{date:date, movies:list of movies}
+    dates_data = date_level_data_for_website(movies)
+    
     print("")
     print("Uploading to the database!")
     cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
     firebase_admin.initialize_app(cred)
     db = firestore.client()
 
-    for date in movies.keys():
-        collection_name = u'movies'
-        ref = db.collection(collection_name).document(date)
-        ref.set({u'date': date}, merge=True)
-        ref.update({u'movies': movies[date]})
+    for date in dates_data.keys():
+        db.collection(u'data_per_date').document(date).set(dates_data[date])
+        # ref = db.collection(u'dates_data').document(date)
+        # ref.set({u'date': date}, merge=True)
+        # ref.update({u'movies': movies[date]})
+        time.sleep(0.05)
+
+    for movie_id in movies_data.keys():
+        db.collection(u'data_per_movie').document(movie_id).set(movies_data[movie_id])
+        time.sleep(0.05)

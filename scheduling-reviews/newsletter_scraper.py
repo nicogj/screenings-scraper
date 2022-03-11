@@ -238,8 +238,11 @@ def collecting_reviews_and_weeks():
         for var in list(weeks):
             temp_dict[var] = weeks[var][i]
         json_export_weeks['weeks'].append(temp_dict)
-    
-    return json_export_reviews, json_export_weeks
+
+    all_dates_reviews = sorted([elem["date"] for elem in json_export_reviews["reviews"]])
+    json_export_dates = dict()
+    json_export_dates.update((str(i), k) for i, k in enumerate(all_dates_reviews))
+    return json_export_reviews, json_export_weeks, json_export_dates
 
 def upload_data_in_database(db, data, key):
     print("")
@@ -264,8 +267,13 @@ def upload_the_list_of_movies(db, data):
     ref = db.collection("reviews").document("all_movies")
     ref.set(movies, merge=True)
 
+def upload_the_list_of_dates(db, data):
+    print("Pushing in DB the list of dates")
+    ref = db.collection("reviews").document("all_dates")
+    ref.set(data, merge=True)
+
 def main(event, context):
-    json_export_reviews, json_export_weeks = collecting_reviews_and_weeks()
+    json_export_reviews, json_export_weeks, json_export_dates  = collecting_reviews_and_weeks()
     if not firebase_admin._apps:
         cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
         firebase_admin.initialize_app(cred)
@@ -273,5 +281,6 @@ def main(event, context):
     upload_data_in_database(db, json_export_reviews, "reviews")
     upload_data_in_database(db, json_export_weeks, "weeks")
     upload_the_list_of_movies(db, json_export_reviews)
+    upload_the_list_of_dates(db, json_export_dates)
 
 main(None, None)
