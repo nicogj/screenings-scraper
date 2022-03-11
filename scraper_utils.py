@@ -109,9 +109,13 @@ def transform_zipcode(code):
             arr_cat = "Paris 15 & 16"
         else:
             arr_cat = "Paris {}".format(arr)
-        return arr_name, arr_cat
+        if arr in [1, 2, 3, 4, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20]:
+            arr_cat2 = 'rd'
+        elif arr in [5, 6, 7, 13, 14, 15]:
+            arr_cat2 = 'rg'
+        return arr_name, arr_cat, arr_cat2
     else:
-        return str(code), "Extramuros"
+        return str(code), "Extramuros", 'em'
 
 def clean_theater_name(name):
     if name == "Christine Cinéma Club (Christine 21)":

@@ -62,7 +62,7 @@ def get_movies():
                     movies[movie_id]['screenings'][date][theater_id][key] = vars(theater_data)[key]
                 movies[movie_id]['screenings'][date][theater_id]['showtimes'] = []
 
-            movies[movie_id]['screenings'][date][theater_id]['showtimes'].append([showtime.date_time.hour, showtime.date_time.minute])
+            movies[movie_id]['screenings'][date][theater_id]['showtimes'].append(showtime.date_time.hour+showtime.date_time.minute/60)
             movies[movie_id]['screenings'][date][theater_id]['showtimes'] = list(set(
                 tuple(i) for i in movies[movie_id]['screenings'][date][theater_id]['showtimes']
             ))
@@ -99,7 +99,7 @@ def add_movie_feats(movie):
 
 def add_theater_feats(theater):
     theater['clean_name'] = clean_theater_name(theater['name'])
-    theater['zipcode_clean'], theater['zipcode_category'] = transform_zipcode(theater['zipcode'])
+    theater['zipcode_clean'], theater['location_1'], theater['location_2'] = transform_zipcode(theater['zipcode'])
     return theater
 
 def movie_level_data_for_website(movies):
