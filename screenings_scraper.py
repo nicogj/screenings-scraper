@@ -124,14 +124,16 @@ def date_level_data_for_website(movies):
     for movie in classic_movies.keys():
         for date in classic_movies[movie]['screenings'].keys():
             if date not in by_date:
-                by_date[date] = []
-            by_date[date].append(classic_movies[movie].copy())
-            by_date[date][-1]['showtimes_theater'] = classic_movies[movie]['screenings'][date].copy()
-            del by_date[date][-1]['screenings']
+                by_date[date] = {}
+                by_date[date]['date'] = date
+                by_date[date]['movies'] = []
+            by_date[date]['movies'].append(classic_movies[movie].copy())
+            by_date[date]['movies'][-1]['showtimes_theater'] = classic_movies[movie]['screenings'][date].copy()
+            del by_date[date]['movies'][-1]['screenings']
 
     # Additional variables:
     for date in by_date.keys():
-        for movie in by_date[date]:
+        for movie in by_date[date]['movies']:
             movie = add_movie_feats(movie)
             for theater in movie['showtimes_theater']:
                 movie['showtimes_theater'][theater] = add_theater_feats(movie['showtimes_theater'][theater])
