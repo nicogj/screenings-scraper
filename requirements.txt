@@ -1,3 +1,5 @@
+backoff
+jmespath
 pandas
 bs4
 requests

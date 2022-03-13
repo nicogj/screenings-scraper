@@ -14,9 +14,6 @@ from PIL import Image
 from io import BytesIO
 from datetime import datetime
 import time
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
 
 def clean_up_string(string):
     string = string.replace('\xa0', ' ')
@@ -271,16 +268,3 @@ def upload_the_list_of_dates(db, data):
     print("Pushing in DB the list of dates")
     ref = db.collection("reviews").document("all_dates")
     ref.set(data, merge=True)
-
-def main(event, context):
-    json_export_reviews, json_export_weeks, json_export_dates  = collecting_reviews_and_weeks()
-    if not firebase_admin._apps:
-        cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
-        firebase_admin.initialize_app(cred)
-    db = firestore.client()
-    upload_data_in_database(db, json_export_reviews, "reviews")
-    upload_data_in_database(db, json_export_weeks, "weeks")
-    upload_the_list_of_movies(db, json_export_reviews)
-    upload_the_list_of_dates(db, json_export_dates)
-
-main(None, None)
