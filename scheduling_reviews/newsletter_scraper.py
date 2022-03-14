@@ -236,10 +236,23 @@ def collecting_reviews_and_weeks():
             temp_dict[var] = weeks[var][i]
         json_export_weeks['weeks'].append(temp_dict)
 
+    #all_dates dict()
     all_dates_reviews = sorted([elem["date"] for elem in json_export_reviews["reviews"]])
     json_export_dates = dict()
     json_export_dates.update((str(i), k) for i, k in enumerate(all_dates_reviews))
-    return json_export_reviews, json_export_weeks, json_export_dates
+    
+    #reviews_without_images dict()
+    json_export_reviews_without_images = dict()
+    for elem in json_export_reviews["reviews"]:
+        del elem["image"]
+        del elem["image_file"]
+        del elem["review"]
+        del elem["showtime"]
+        del elem["time"]
+        json_export_reviews_without_images[str(elem["date"])] = elem
+
+    return json_export_reviews, json_export_weeks, \
+        json_export_dates, json_export_reviews_without_images
 
 def upload_data_in_database(db, data, key):
     print("")

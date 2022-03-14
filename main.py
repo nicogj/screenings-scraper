@@ -33,15 +33,22 @@ def upload_movies(event, context):
 
 
 def upload_newsletter(event, context):
-    json_export_reviews, json_export_weeks, json_export_dates  = collecting_reviews_and_weeks()
+    json_export_reviews, json_export_weeks, \
+        json_export_dates, json_export_reviews_without_images  = collecting_reviews_and_weeks()
     if not firebase_admin._apps:
         cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
         firebase_admin.initialize_app(cred)
     db = firestore.client()
     upload_data_in_database(db, json_export_reviews, "reviews")
     upload_data_in_database(db, json_export_weeks, "weeks")
-    upload_the_list_of_movies(db, json_export_reviews)
-    upload_the_list_of_dates(db, json_export_dates)
+    
+    print("Pushing in DB the list of dates")
+    ref = db.collection("reviews").document("all_dates")
+    ref.set(json_export_dates, merge=True)
 
+    print("Pushing in DB the list of review without images")
+    ref = db.collection("reviews").document("all_reviews")
+    ref.set(json_export_reviews_without_images, merge=True)
 
-upload_movies(None, None)
+#upload_movies(None, None)
+#upload_newsletter(None, None)
