@@ -144,7 +144,7 @@ def get_sort_name(name):
     sort_name = name.split(" ")[-1] + ", " + " ".join(name.split(" ")[:-1]) # Get last word of name
 
     # Include particles
-    if sort_name.split(" ")[-2:] = ["DE", "LA"]:
+    if sort_name.split(" ")[-2:] == ["DE", "LA"]:
         sort_name = "DE LA" + " ".join(sort_name[:-2])
     if sort_name.split(" ")[-1] in ["LE", "LA", "DE"]:
         sort_name = sort_name[-1] + " ".join(sort_name[:-1])

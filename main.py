@@ -16,7 +16,7 @@ def upload_movies(event, context):
     movies_data = movie_level_data_for_website(movies)
     #keys: dates; values: dicts{date:date, movies:list of movies}
     dates_data = date_level_data_for_website(movies)
-    
+
     print("")
     print("Uploading to the database!")
     cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
@@ -41,7 +41,7 @@ def upload_newsletter(event, context):
     db = firestore.client()
     upload_data_in_database(db, json_export_reviews, "reviews")
     upload_data_in_database(db, json_export_weeks, "weeks")
-    
+
     print("Pushing in DB the list of dates")
     ref = db.collection("reviews").document("all_dates")
     ref.set(json_export_dates, merge=True)
@@ -50,5 +50,5 @@ def upload_newsletter(event, context):
     ref = db.collection("reviews").document("all_reviews")
     ref.set(json_export_reviews_without_images, merge=True)
 
-#upload_movies(None, None)
-#upload_newsletter(None, None)
+upload_movies(None, None)
+upload_newsletter(None, None)
