@@ -49,6 +49,3 @@ def upload_newsletter(event, context):
     print("Pushing in DB the list of review without images")
     ref = db.collection("reviews").document("all_reviews")
     ref.set(json_export_reviews_without_images, merge=True)
-
-#upload_movies(None, None)
-#upload_newsletter(None, None)

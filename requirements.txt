@@ -6,5 +6,5 @@ requests
 urllib3
 numpy
 Pillow
-time
+tqdm
 firebase_admin
