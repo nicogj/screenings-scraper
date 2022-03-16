@@ -82,6 +82,18 @@ def get_theater_codes():
         'B0101', # LE STUDIO
         'B0123', # ESPACE 1789
         'C0072', # LE GRAND ACTION
+        'B0127', # La Pleiade Cachan
+        'B0119', # Le Trianon Romainville
+        'B0040', # Cin'Hoche Sartrouville
+        'B0107', # Ciné Malraux
+        'B0148', # Le Vincennes
+        'B0167', # Les Toiles Saint-Gratien
+        'B0215', # Cinémassy
+        'B0122', # L'écran Saint Denis
+        'B0003', # Etoile Cosmos Chelles
+        'B0110', # L'Etoile La Courneuve
+        'B0073', # Le Select Antony
+        'C0119', # Le Forum des Images
     ]
 
     return theater_codes
