@@ -244,12 +244,13 @@ def collecting_reviews_and_weeks():
     #reviews_without_images dict()
     json_export_reviews_without_images = dict()
     for elem in json_export_reviews["reviews"]:
-        del elem["image"]
-        del elem["image_file"]
-        del elem["review"]
-        del elem["showtime"]
-        del elem["time"]
-        json_export_reviews_without_images[str(elem["date"])] = elem
+        elem_aux = elem.copy()
+        del elem_aux["image"]
+        del elem_aux["image_file"]
+        del elem_aux["review"]
+        del elem_aux["showtime"]
+        del elem_aux["time"]
+        json_export_reviews_without_images[str(elem_aux["date"])] = elem_aux
 
     return json_export_reviews, json_export_weeks, \
         json_export_dates, json_export_reviews_without_images
@@ -261,6 +262,7 @@ def upload_data_in_database(db, data, key):
     last_date = sorted([movie["date"] for movie in data])[-1]
     for movie in data:
         if last_date==movie["date"]:
+            print(movie)
             if key=="reviews":
                 doc_name = movie["date"] + "_" + movie["category"]
             else:

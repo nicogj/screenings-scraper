@@ -5,8 +5,7 @@ from firebase_admin import credentials, firestore
 from scheduling_movies.screenings_scraper import \
     get_movies, movie_level_data_for_website, date_level_data_for_website
 from scheduling_reviews.newsletter_scraper import \
-    collecting_reviews_and_weeks, upload_data_in_database, \
-    upload_data_in_database, upload_the_list_of_movies, upload_the_list_of_dates
+    collecting_reviews_and_weeks, upload_data_in_database
 
 
 def upload_movies(event, context):
