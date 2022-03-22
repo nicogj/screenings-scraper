@@ -13,5 +13,9 @@
 .git
 .gitignore
 
-node_modules
-#!include:.gitignore
+# Folders and files
+data/**/*.pkl
+data/*.json
+img/**/*.png
+__pycache__/
+*.py[cod]

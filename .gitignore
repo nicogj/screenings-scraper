@@ -1,5 +1,6 @@
 # Folders and files
 data/**/*.pkl
+data/*.json
 img/**/*.png
 
 # Byte-compiled / optimized / DLL files
@@ -91,9 +92,6 @@ target/
 
 # Mypy cache
 .mypy_cache/
-website-cine-e77fb4ab2924.json
-classic_movies.json
-classic_movies.json
 classic_movies.json
 *.png
-*.json
+website-cine-e77fb4ab2924.json
