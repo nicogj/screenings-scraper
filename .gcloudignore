@@ -17,5 +17,8 @@
 data/**/*.pkl
 data/*.json
 img/**/*.png
+classic_movies.json
+*.png
+
 __pycache__/
 *.py[cod]
