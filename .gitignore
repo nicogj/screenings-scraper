@@ -1,6 +1,6 @@
 # Folders and files
 data/**/*.pkl
-data/*.json
+data/**/*.json
 img/**/*.png
 
 # Byte-compiled / optimized / DLL files

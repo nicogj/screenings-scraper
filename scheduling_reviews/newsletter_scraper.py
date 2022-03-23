@@ -68,6 +68,8 @@ def collecting_reviews_and_weeks():
     for elem in soup.find_all(class_ = 'campaign'):
         links[elem.text[6:10]+"-"+elem.text[3:5]+"-"+elem.text[:2]] = elem.find('a').get('href')
 
+    links = {'2022-03-23': 'http://eepurl.com/hXPoOD'}
+
     print("\nCOLLECTING REVIEWS:")
     over1MB = 0
     date_list, year_list, month_list, time_list, image_list, image_file_list, category_list, movie_list, review_list, \
@@ -133,7 +135,7 @@ def collecting_reviews_and_weeks():
             id_list += id_l
 
         except:
-            print('{} Failed'.format(date))
+            print('{} failed'.format(date))
 
     reviews = pd.DataFrame({
         'id': id_list,
@@ -205,7 +207,7 @@ def collecting_reviews_and_weeks():
             week_list += week_l
 
         except:
-            print('{} Failed'.format(date))
+            print('{} failed'.format(date))
 
     weeks = pd.DataFrame({
         'year': year_list,
@@ -218,7 +220,6 @@ def collecting_reviews_and_weeks():
 
     weeks['week'] = weeks['week'].apply(lambda x: clean_up_week(x))
 
-
     print("\nExporting")
     json_export_reviews = {}
     json_export_reviews['reviews'] = []
@@ -227,7 +228,7 @@ def collecting_reviews_and_weeks():
         for var in list(reviews):
             temp_dict[var] = reviews[var][i]
         json_export_reviews['reviews'].append(temp_dict)
-    
+
     json_export_weeks = {}
     json_export_weeks['weeks'] = []
     for i in range(weeks.shape[0]):
@@ -240,7 +241,7 @@ def collecting_reviews_and_weeks():
     all_dates_reviews = sorted([elem["date"] for elem in json_export_reviews["reviews"]])
     json_export_dates = dict()
     json_export_dates.update((str(i), k) for i, k in enumerate(all_dates_reviews))
-    
+
     #reviews_without_images dict()
     json_export_reviews_without_images = dict()
     for elem in json_export_reviews["reviews"]:
@@ -252,34 +253,30 @@ def collecting_reviews_and_weeks():
         del elem_aux["time"]
         json_export_reviews_without_images[str(elem_aux["date"])] = elem_aux
 
-    return json_export_reviews, json_export_weeks, \
-        json_export_dates, json_export_reviews_without_images
+    return json_export_reviews, json_export_weeks, json_export_dates, json_export_reviews_without_images
 
 def upload_data_in_database(db, data, key):
-    print("")
-    print("Uploading to the database", key)
+    print("\nUploading {} to the database".format(key))
     data = data[key]
-    last_date = sorted([movie["date"] for movie in data])[-1]
-    for movie in data:
-        if last_date==movie["date"]:
-            print(movie)
+    last_date = sorted([elem["date"] for elem in data])[-1]
+    for elem in data:
+        if last_date==elem["date"]:
             if key=="reviews":
-                doc_name = movie["date"] + "_" + movie["category"]
+                doc_name = elem["date"] + "_" + elem["category"]
             else:
-                doc_name = movie["date"]
-            print("Pushing in DB!", doc_name)
+                doc_name = elem["date"] + "_" + elem['name']
+            print("Pushing {} to DB".format(doc_name))
             ref = db.collection(key).document(doc_name)
-            ref.set(movie, merge=True)
+            ref.set(elem, merge=True)
         time.sleep(0.05)
 
 def upload_the_list_of_movies(db, data):
-    print("Pushing in DB the list of movies")
-    movies = dict([(movie["movie_name"], movie["category"]) for movie in data["reviews"] \
-        if movie["category"]=="COUP DE CŒUR"])
+    print("Pushing the list of movies to DB")
+    movies = dict([(movie["movie_name"], movie["category"]) for movie in data["reviews"] if movie["category"]=="COUP DE CŒUR"])
     ref = db.collection("reviews").document("all_movies")
     ref.set(movies, merge=True)
 
 def upload_the_list_of_dates(db, data):
-    print("Pushing in DB the list of dates")
+    print("Pushing the list of dates to DB")
     ref = db.collection("reviews").document("all_dates")
     ref.set(data, merge=True)
