@@ -29,8 +29,7 @@ def upload_movies(event, context):
 
 
 def upload_newsletter(event, context):
-    json_export_reviews, json_export_weeks, \
-        json_export_dates, json_export_reviews_without_images  = collecting_reviews_and_weeks()
+    json_export_reviews, json_export_weeks, json_export_dates, json_export_reviews_without_images  = collecting_reviews_and_weeks()
 
     if not firebase_admin._apps:
         cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
@@ -49,4 +48,4 @@ def upload_newsletter(event, context):
 
 # For manual runs, uncomment the following lines:
 # upload_movies(None, None)
-upload_newsletter(None, None)
+# upload_newsletter(None, None)

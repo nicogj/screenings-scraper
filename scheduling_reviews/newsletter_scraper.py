@@ -68,8 +68,6 @@ def collecting_reviews_and_weeks():
     for elem in soup.find_all(class_ = 'campaign'):
         links[elem.text[6:10]+"-"+elem.text[3:5]+"-"+elem.text[:2]] = elem.find('a').get('href')
 
-    links = {'2022-03-23': 'http://eepurl.com/hXPoOD'}
-
     print("\nCOLLECTING REVIEWS:")
     over1MB = 0
     date_list, year_list, month_list, time_list, image_list, image_file_list, category_list, movie_list, review_list, \
@@ -220,7 +218,7 @@ def collecting_reviews_and_weeks():
 
     weeks['week'] = weeks['week'].apply(lambda x: clean_up_week(x))
 
-    print("\nExporting")
+    print("\nUploading to database:")
     json_export_reviews = {}
     json_export_reviews['reviews'] = []
     for i in range(reviews.shape[0]):
@@ -256,7 +254,6 @@ def collecting_reviews_and_weeks():
     return json_export_reviews, json_export_weeks, json_export_dates, json_export_reviews_without_images
 
 def upload_data_in_database(db, data, key):
-    print("\nUploading {} to the database".format(key))
     data = data[key]
     last_date = sorted([elem["date"] for elem in data])[-1]
     for elem in data:
