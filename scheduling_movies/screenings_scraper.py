@@ -44,7 +44,7 @@ def get_movies():
             if movie_id not in movies:
                 movies[movie_id] = {}
                 var = 'year'
-                for key in ['title', 'original_title', 'year', 'directors', 'language']:
+                for key in ['title', 'original_title', 'year', 'directors', 'language', 'countries']:
                     movies[movie_id][key] = vars(showtime.movie)[key]
                 movies[movie_id]['duration'] = None if showtime.movie.duration is None else showtime.movie.duration.seconds
                 movies[movie_id]['screenings'] = {}
