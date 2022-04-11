@@ -58,7 +58,8 @@ def clean_up_week(week):
     week = re.sub('<div style=>', '', week)
     return week
 
-def collecting_reviews_and_weeks():
+def get_links():
+
     base_url = 'https://us6.campaign-archive.com/home/?u=00a9245e71d3375ef4542a588&id=3270cdb251'
 
     html = requests.get(base_url)
@@ -68,69 +69,73 @@ def collecting_reviews_and_weeks():
     for elem in soup.find_all(class_ = 'campaign'):
         links[elem.text[6:10]+"-"+elem.text[3:5]+"-"+elem.text[:2]] = elem.find('a').get('href')
 
+    return links
+
+def get_review_info(review):
+
+    cat_movie = review.find('h3').text
+
+    if len(cat_movie.split('\n'))>1:
+        category = cat_movie.split('\n')[0].strip()
+        movie = cat_movie.split('\n')[1].strip()
+    else:
+        category = cat_movie.split(':')[0].strip()
+        movie = cat_movie.split(':')[1].strip()
+    review_text = clean_up_review(review.find(class_ = 'mcnTextContent').findAll('div')[0])
+    showtime = clean_up_string(review.find(class_ = 'mcnTextContent').findAll('div')[-1].text.strip())
+
+    img_url = review.find(class_ = 'mcnImage').get('src')
+    img_bytes = urllib.request.urlopen(img_url).read()
+    img = base64.b64encode(img_bytes)
+    if sys.getsizeof(img)>908487:
+        ratio = math.sqrt(sys.getsizeof(img)/1000000)+0.05
+        img = Image.open(io.BytesIO(img_bytes))
+        img = img.resize((int(img.size[0]/ratio), int(img.size[1]/ratio)))
+        im_file = BytesIO()
+        img.save(im_file, format="PNG")
+        img = im_file.getvalue()
+        img = base64.b64encode(img)
+
+    img = img.decode('utf-8')
+
+    return category, movie, review_text, showtime, img_url, img
+
+def get_week_info(week):
+
+    name = week.find("h3").text
+    week_text = str(week.find(class_="mcnTextContent").find("div"))
+
+    return name, week_text
+
+def collecting_reviews_and_weeks():
+
+    links = get_links()
+
     print("\nCOLLECTING REVIEWS:")
     over1MB = 0
-    date_list, year_list, month_list, time_list, image_list, image_file_list, category_list, movie_list, review_list, \
-        showtime_list, id_list = [], [], [], [], [], [], [], [], [], [], []
+    date_list, time_list, img_url_list, img_list, category_list, movie_list, review_text_list, showtime_list, id_list = [], [], [], [], [], [], [], [], []
     for date, link in links.items():
 
         try:
             html = requests.get(link)
             soup = BeautifulSoup(html.content, 'html.parser')
 
-            date_l, year_l, month_l, time_l, image_l, image_file_l, category_l, movie_l, review_l, showtime_l, id_l = [], [], [], [], [], [], [], [], [], [], []
-
             i=1
-            texts = soup.findAll(class_ = 'mcnImageCardBlock')
-            for text in texts:
-                datelist = date.split("-")
-                year, month = datelist[0], datelist[1]
-                dt = datetime.strptime(date, '%Y-%m-%d')
-                year_l.append(year)
-                month_l.append(month)
-                date_l.append(date)
-                time_l.append(str(int(time.mktime(dt.timetuple()))))
-                cat_movie = text.find('h3').text
+            reviews = soup.findAll(class_ = 'mcnImageCardBlock')
+            for review in reviews:
+                category, movie, review_text, showtime, img_url, img = get_review_info(review)
 
-                if len(cat_movie.split('\n'))>1:
-                    category_l.append(cat_movie.split('\n')[0].strip())
-                    movie_l.append(cat_movie.split('\n')[1].strip())
-                else:
-                    category_l.append(cat_movie.split(':')[0].strip())
-                    movie_l.append(cat_movie.split(':')[1].strip())
-                review_l.append(clean_up_review(text.find(class_ = 'mcnTextContent').findAll('div')[0]))
-                showtime_l.append(clean_up_string(text.find(class_ = 'mcnTextContent').findAll('div')[-1].text.strip()))
+                date_list.append(date)
+                time_list.append(str(int(time.mktime(datetime.strptime(date, '%Y-%m-%d').timetuple()))))
+                id_list.append("id_" + str(date).replace('-', '') + "_" + str(i))
+                category_list.append(category)
+                movie_list.append(movie)
+                review_text_list.append(review_text)
+                showtime_list.append(showtime)
+                img_url_list.append(img_url)
+                img_list.append(img)
 
-                current_id = "id_" + str(date).replace('-', '') + "_" + str(i)
-                image_url = text.find(class_ = 'mcnImage').get('src')
-                id_l.append(current_id)
-                image_l.append(image_url)
-                img_bytes = urllib.request.urlopen(image_url).read()
-                img = base64.b64encode(img_bytes)
-                if sys.getsizeof(img)>908487:
-                    ratio = math.sqrt(sys.getsizeof(img)/1000000)+0.05
-                    img = Image.open(io.BytesIO(img_bytes))
-                    img = img.resize((int(img.size[0]/ratio), int(img.size[1]/ratio)))
-                    im_file = BytesIO()
-                    img.save(im_file, format="PNG")
-                    img = im_file.getvalue()
-                    img = base64.b64encode(img)
-
-                img = img.decode('utf-8')
-                image_file_l.append(img)
                 i += 1
-
-            date_list += date_l
-            month_list += month_l
-            year_list += year_l
-            time_list += time_l
-            image_list += image_l
-            image_file_list += image_file_l
-            category_list += category_l
-            movie_list += movie_l
-            review_list += review_l
-            showtime_list += showtime_l
-            id_list += id_l
 
         except:
             print('{} failed'.format(date))
@@ -138,16 +143,16 @@ def collecting_reviews_and_weeks():
     reviews = pd.DataFrame({
         'id': id_list,
         'date': date_list,
-        'year': year_list,
-        'month': month_list,
         'time': time_list,
         'category': category_list,
         'movie': movie_list,
-        'review': review_list,
+        'review': review_text_list,
         'showtime': showtime_list,
-        'image': image_list,
-        'image_file': image_file_list
+        'image': img_url_list,
+        'image_file': img_list
     })
+    reviews['year'] = pd.DatetimeIndex(pd.to_datetime(reviews['date'])).year.astype(str)
+    reviews['month'] = pd.DatetimeIndex(pd.to_datetime(reviews['date'])).month.astype(str)
     reviews = reviews.sort_values(['date', 'id'], ascending=[False, True]).reset_index(drop=True)
 
     reviews.loc[
@@ -177,58 +182,43 @@ def collecting_reviews_and_weeks():
 
 
     print("\nCOLLECTING WEEKS:")
-    date_list, year_list, month_list, time_list, name_list, week_list = [], [], [], [], [], []
+    date_list, name_list, week_text_list = [], [], []
     for date, link in links.items():
 
         try:
             html = requests.get(link)
             soup = BeautifulSoup(html.content, 'html.parser')
-            date_l, name_l, week_l, year_l, month_l, time_l = [], [], [], [], [], []
             weeks = soup.findAll(class_ = 'mcnBoxedTextBlock')
+            weeks = [week for week in weeks if week.find("h3") is not None]
 
             for week in weeks:
-                datelist = date.split("-")
-                year, month = datelist[0], datelist[1]
-                dt = datetime.strptime(date, '%Y-%m-%d')
-                year_l.append(year)
-                month_l.append(month)
-                time_l.append(str(int(time.mktime(dt.timetuple()))))
-                date_l.append(date)
-                name_l.append(week.find("h3").text)
-                week_l.append(str(week.find(class_="mcnTextContent").find("div")))
+                name, week_text = get_week_info(week)
 
-            year_list += year_l
-            month_list += month_l
-            time_list += time_l
-            date_list += date_l
-            name_list += name_l
-            week_list += week_l
+                date_list.append(date)
+                name_list.append(name)
+                week_text_list.append(week_text)
 
         except:
             print('{} failed'.format(date))
 
     weeks = pd.DataFrame({
-        'year': year_list,
-        'month': month_list,
-        'time': time_list,
         'date': date_list,
         'name': name_list,
-        'week': week_list,
+        'week': week_text_list,
     }).sort_values('date', ascending=False).reset_index(drop=True)
-
+    weeks['year'] = pd.DatetimeIndex(pd.to_datetime(weeks['date'])).year.astype(str)
+    weeks['month'] = pd.DatetimeIndex(pd.to_datetime(weeks['date'])).month.astype(str)
     weeks['week'] = weeks['week'].apply(lambda x: clean_up_week(x))
 
     print("\nUploading to database:")
-    json_export_reviews = {}
-    json_export_reviews['reviews'] = []
+    json_export_reviews = {'reviews': []}
     for i in range(reviews.shape[0]):
         temp_dict = {}
         for var in list(reviews):
             temp_dict[var] = reviews[var][i]
         json_export_reviews['reviews'].append(temp_dict)
 
-    json_export_weeks = {}
-    json_export_weeks['weeks'] = []
+    json_export_weeks = {'weeks': []}
     for i in range(weeks.shape[0]):
         temp_dict = {}
         for var in list(weeks):
