@@ -153,6 +153,8 @@ def collecting_reviews_and_weeks():
     })
     reviews['year'] = pd.DatetimeIndex(pd.to_datetime(reviews['date'])).year.astype(str)
     reviews['month'] = pd.DatetimeIndex(pd.to_datetime(reviews['date'])).month.astype(str)
+    for i, elem in enumerate(reviews['month']):
+        reviews['month'][i] = elem.zfill(2)
     reviews = reviews.sort_values(['date', 'id'], ascending=[False, True]).reset_index(drop=True)
 
     reviews.loc[
