@@ -1,8 +1,8 @@
 from datetime import datetime
 from tqdm.auto import tqdm
 import time
-from scheduling_movies.allocine_utils import Allocine
-from scheduling_movies.scraper_utils import get_theater_codes, transform_zipcode, clean_theater_name, get_sort_name, good_movie
+from allocine import Allocine
+from utils import get_theater_codes, good_movie, encode_movie, add_movie_feats, add_theater_feats
 
 def theater_scraper(theater_code):
 
@@ -37,17 +37,21 @@ def get_movies():
 
         for showtime in theater_data.showtimes:
 
-            movie_id = str(showtime.movie.movie_id)
+            movie_id = encode_movie(showtime.movie.title, showtime.movie.year, showtime.movie.directors)
             date = str(showtime.date.year) + "_" + str(showtime.date.month).zfill(2) + "_" + str(showtime.date.day).zfill(2)
             theater_id = theater # this might change as we leave Allocine
 
             if movie_id not in movies:
                 movies[movie_id] = {}
-                var = 'year'
+                movies[movie_id]['allocine_id'] = str(showtime.movie.movie_id)
                 for key in ['title', 'original_title', 'year', 'directors', 'language', 'countries']:
                     movies[movie_id][key] = vars(showtime.movie)[key]
                 movies[movie_id]['duration'] = None if showtime.movie.duration is None else showtime.movie.duration.seconds
                 movies[movie_id]['screenings'] = {}
+
+            else:
+                if movies[movie_id]['title'] != showtime.movie.title:
+                    print("*** Encoding error on title {} (encoded as {}) ***".format(showtime.movie.title, movie_id))
 
             if date not in movies[movie_id]['screenings']:
                 movies[movie_id]['screenings'][date] = {}
@@ -88,15 +92,6 @@ def subset_to_classic_movies(movies):
 ######################
 #PREP DATA FOR WEBSITE
 ######################
-
-def add_movie_feats(movie):
-    movie['director_sort_name'] = get_sort_name(movie['directors'])
-    return movie
-
-def add_theater_feats(theater):
-    theater['clean_name'] = clean_theater_name(theater['name'])
-    theater['zipcode_clean'], theater['location_1'], theater['location_2'] = transform_zipcode(theater['zipcode'])
-    return theater
 
 def movie_level_data_for_website(movies):
 

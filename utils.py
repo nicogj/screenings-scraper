@@ -1,4 +1,12 @@
 import re
+import re
+import unidecode
+from nltk.corpus import stopwords
+from google_trans_new import google_translator
+detector = google_translator()
+
+stopwords_list = stopwords.words('english')+stopwords.words('french')
+stopwords_list = [elem for elem in stopwords_list if elem != "suis"]
 
 def get_theater_codes():
 
@@ -151,6 +159,12 @@ def clean_theater_name(name):
     name = name.strip()
     return name
 
+def clean_movie_name(name):
+    if name == "As I Was Moving Ahead Occasionnaly I Saw Brief Glimpses of Beauty":
+        name = "As I Was Moving Ahead Occasionally I Saw Brief Glimpses of Beauty"
+    name = name.strip()
+    return name
+
 def get_sort_name(name):
     name = name.split(",")[0].upper().strip() # Only first director
     sort_name = name.split(" ")[-1] + ", " + " ".join(name.split(" ")[:-1]) # Get last word of name
@@ -185,3 +199,61 @@ def good_movie(movie):
         return False
     else:
         return True
+
+def reduce_movie_name(movie_name):
+
+    movie_name = movie_name.lower()
+
+    # Remove special characters
+    movie_name = unidecode.unidecode(movie_name)
+    movie_name = re.sub('[^A-z0-9]', ' ', movie_name)
+    movie_name = re.sub('\s+', ' ', movie_name)
+    movie_name = movie_name.strip()
+
+    # Remove stop words
+    if len(movie_name.split(' ')) > 3:
+        # lang = detector.detect(movie_name)[1] # THIS STEP IS TAKING TOO LONG
+        movie_name = movie_name.split(' ')
+        try:
+            # non_stop_words = [word for word in movie_name if word not in stopwords.words(lang)]
+            non_stop_words = [word for word in movie_name if word not in stopwords_list]
+        except:
+            non_stop_words = movie_name
+        if len(non_stop_words) > 0:
+            movie_name = ' '.join(non_stop_words)
+        else:
+            movie_name = ' '.join(movie_name)
+
+    return movie_name
+
+def encode_movie(movie_name, movie_year, movie_directors):
+
+    movie_name = clean_movie_name(movie_name)
+    movie_name = reduce_movie_name(movie_name)
+    movie_name = '-'.join(movie_name.split(' '))
+
+    movie_year = str(movie_year)
+
+    id = movie_name + '-' + movie_year
+
+    return id
+
+def add_movie_feats(movie):
+    movie['director_sort_name'] = get_sort_name(movie['directors'])
+    return movie
+
+def add_theater_feats(theater):
+    theater['clean_name'] = clean_theater_name(theater['name'])
+    theater['zipcode_clean'], theater['location_1'], theater['location_2'] = transform_zipcode(theater['zipcode'])
+    return theater
+
+def clean_up_string(string):
+    string = string.replace('\xa0', ' ')
+    string = string.strip()
+
+    for char in [':', ';', '!', '?', '«', '»']:
+        string = re.sub(r'\s\{}'.format(char), '&nbsp;{}'.format(char), string)
+    for char in ['«']:
+        string = re.sub(r'\{}\s'.format(char), '{}&nbsp;'.format(char), string)
+
+    return string.strip()

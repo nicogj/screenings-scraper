@@ -1,3 +1,5 @@
+# Local copy of https://github.com/tducret/allocine-python
+
 import pickle
 import time
 import firebase_admin

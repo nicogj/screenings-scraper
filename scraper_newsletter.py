@@ -15,16 +15,7 @@ from io import BytesIO
 from datetime import datetime
 import time
 
-def clean_up_string(string):
-    string = string.replace('\xa0', ' ')
-    string = string.strip()
-
-    for char in [':', ';', '!', '?', '«', '»']:
-        string = re.sub(r'\s\{}'.format(char), '&nbsp;{}'.format(char), string)
-    for char in ['«']:
-        string = re.sub(r'\{}\s'.format(char), '{}&nbsp;'.format(char), string)
-
-    return string.strip()
+from utils import clean_up_string
 
 def clean_up_review(elem):
     string = str(elem)
@@ -175,9 +166,9 @@ def collecting_reviews_and_weeks():
         (reviews['movie']=="Hotel by the River, Hong Sang-Soo\u00a0(2018)")&(reviews['date']=="2022-02-16"), 'review'
     ] = "Un po\u00e8te qui sent la mort s\u2019approcher a donn\u00e9 rendez-vous \u00e0 ses fils dans un h\u00f4tel au bord d\u2019une rivi\u00e8re. Les retrouvailles sont difficiles&nbsp;: au sens propre (ils ne parviennent pas \u00e0 se retrouver dans le restaurant de l\u2019h\u00f4tel) comme au figur\u00e9 (il y a un je-ne-sais-quoi de distendu dans les relations entre le p\u00e8re et ses fils). Comme souvent chez Hong Sang-Soo (ou comme souvent, tout court), les langues se d\u00e9lient autour d\u2019un verre. L\u2019alcool est ce moteur schizophr\u00e9nique de la discussion qui r\u00e9v\u00e8le autant qu\u2019il fait oublier. Certaines choses s\u2019\u00e9chappent, bien d\u2019autres s\u2019effacent\u2026 Pendant ce temps dans le m\u00eame h\u00f4tel, une jeune femme, accompagn\u00e9e d\u2019une amie, pleure la fin de son couple. L\u2019\u00e9crivain partage un moment avec elles, leur r\u00e9cite un po\u00e8me qui les apaise. Mais l\u2019art n\u2019est pas un moyen de r\u00e9demption. Au mieux, il permet de saisir l\u2019inexorable fuite du temps et les regrets qui en d\u00e9coulent. Hong Sang-Soo nous le prouve ici mieux que quiconque."
 
-    reviews['movie_name'] = reviews['movie'].apply(lambda x: ','.join(x.split(',')[:-1]))
-    reviews['movie_directors'] = reviews['movie'].apply(lambda x: re.sub('\(.+\)', '', x.split(',')[-1]).strip())
-    reviews['movie_year'] = reviews['movie'].apply(lambda x: x.split(',')[-1][-5:-1])
+    reviews['title'] = reviews['movie'].apply(lambda x: ','.join(x.split(',')[:-1]))
+    reviews['directors'] = reviews['movie'].apply(lambda x: re.sub('\(.+\)', '', x.split(',')[-1]).strip())
+    reviews['year'] = reviews['movie'].apply(lambda x: x.split(',')[-1][-5:-1])
     reviews['display'] = np.where(reviews['category'].isin(['COUP DE CŒUR', 'À VOIR', 'On adore']), 'yes', 'no')
 
 
@@ -256,14 +247,3 @@ def upload_data_in_database(db, data, key):
             ref = db.collection(key).document(doc_name)
             ref.set(elem, merge=True)
         time.sleep(0.05)
-
-def upload_the_list_of_movies(db, data):
-    print("Pushing the list of movies to DB")
-    movies = dict([(movie["movie_name"], movie["category"]) for movie in data["reviews"] if movie["category"]=="COUP DE CŒUR"])
-    ref = db.collection("reviews").document("all_movies")
-    ref.set(movies, merge=True)
-
-def upload_the_list_of_dates(db, data):
-    print("Pushing the list of dates to DB")
-    ref = db.collection("reviews").document("all_dates")
-    ref.set(data, merge=True)
