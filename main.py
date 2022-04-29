@@ -25,7 +25,8 @@ def upload_movies(event, context):
         time.sleep(0.05)
 
 def upload_newsletter(event, context):
-    json_export_reviews, json_export_weeks, json_export_dates, json_export_reviews_without_images  = collecting_reviews_and_weeks()
+    json_export_reviews, json_export_weeks, json_export_dates, \
+        json_export_cdc_without_images, json_export_curiosite_without_images  = collecting_reviews_and_weeks()
 
     if not firebase_admin._apps:
         cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
@@ -39,8 +40,10 @@ def upload_newsletter(event, context):
     ref.set(json_export_dates, merge=True)
 
     print("Pushing the list of review without images to DB")
-    ref = db.collection("reviews").document("all_reviews")
-    ref.set(json_export_reviews_without_images, merge=True)
+    ref = db.collection("reviews").document("all_coup_de_coeur")
+    ref.set(json_export_cdc_without_images, merge=True)
+    ref = db.collection("reviews").document("all_curiosite")
+    ref.set(json_export_curiosite_without_images, merge=True)
 
 # For manual runs, uncomment the following lines:
 # upload_movies(None, None)
