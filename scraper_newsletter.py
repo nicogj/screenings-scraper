@@ -239,8 +239,7 @@ def collecting_reviews_and_weeks():
 
     json_export_cdc_without_images = create_list_reviews_without_images("COUP DE CŒUR")
     json_export_curiosite_without_images = create_list_reviews_without_images("ON EST CURIEUX")
-    return json_export_reviews, json_export_weeks, json_export_dates, \
-        json_export_cdc_without_images, json_export_curiosite_without_images
+    return json_export_reviews, json_export_weeks, json_export_dates, json_export_cdc_without_images, json_export_curiosite_without_images
 
 def upload_data_in_database(db, data, key):
     data = data[key]
