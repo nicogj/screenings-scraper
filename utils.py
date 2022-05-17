@@ -159,7 +159,7 @@ def clean_theater_name(name):
     name = name.strip()
     return name
 
-def clean_movie_name(name):
+def clean_movie_title(name):
     if name == "As I Was Moving Ahead Occasionnaly I Saw Brief Glimpses of Beauty":
         name = "As I Was Moving Ahead Occasionally I Saw Brief Glimpses of Beauty"
     name = name.strip()
@@ -200,46 +200,47 @@ def good_movie(movie):
     else:
         return True
 
-def reduce_movie_name(movie_name):
+def reduce_movie_title(movie_title):
 
-    movie_name = movie_name.lower()
+    movie_title = movie_title.lower()
 
     # Remove special characters
-    movie_name = unidecode.unidecode(movie_name)
-    movie_name = re.sub('[^A-z0-9]', ' ', movie_name)
-    movie_name = re.sub('\s+', ' ', movie_name)
-    movie_name = movie_name.strip()
+    movie_title = unidecode.unidecode(movie_title)
+    movie_title = re.sub('[^A-z0-9]', ' ', movie_title)
+    movie_title = re.sub('\s+', ' ', movie_title)
+    movie_title = movie_title.strip()
 
     # Remove stop words
-    if len(movie_name.split(' ')) > 3:
-        # lang = detector.detect(movie_name)[1] # THIS STEP IS TAKING TOO LONG
-        movie_name = movie_name.split(' ')
+    if len(movie_title.split(' ')) > 3:
+        # lang = detector.detect(movie_title)[1] # THIS STEP IS TAKING TOO LONG
+        movie_title = movie_title.split(' ')
         try:
-            # non_stop_words = [word for word in movie_name if word not in stopwords.words(lang)]
-            non_stop_words = [word for word in movie_name if word not in stopwords_list]
+            # non_stop_words = [word for word in movie_title if word not in stopwords.words(lang)]
+            non_stop_words = [word for word in movie_title if word not in stopwords_list]
         except:
-            non_stop_words = movie_name
+            non_stop_words = movie_title
         if len(non_stop_words) > 0:
-            movie_name = ' '.join(non_stop_words)
+            movie_title = ' '.join(non_stop_words)
         else:
-            movie_name = ' '.join(movie_name)
+            movie_title = ' '.join(movie_title)
 
-    return movie_name
+    return movie_title
 
-def encode_movie(movie_name, movie_year, movie_directors):
+def encode_movie(movie_title, movie_year, movie_directors):
 
-    movie_name = clean_movie_name(movie_name)
-    movie_name = reduce_movie_name(movie_name)
-    movie_name = '-'.join(movie_name.split(' '))
+    movie_title = clean_movie_title(movie_title)
+    movie_title = reduce_movie_title(movie_title)
+    movie_title = '-'.join(movie_title.split(' '))
 
     movie_year = str(movie_year)
 
-    id = movie_name + '-' + movie_year
+    id = movie_title + '-' + movie_year
 
     return id
 
 def add_movie_feats(movie):
     movie['director_sort_name'] = get_sort_name(movie['directors'])
+    movie['id'] = encode_movie(movie['title'], movie['year'], movie['directors'])
     return movie
 
 def add_theater_feats(theater):
