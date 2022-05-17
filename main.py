@@ -6,12 +6,13 @@ from scraper_screenings import get_movies, movie_level_data_for_website, date_le
 from scraper_newsletter import collecting_reviews_and_weeks, upload_data_in_database
 
 def upload_movies(event, context):
-    print("Creating the data!")
+    print("\n\nSCREENINGS SCRAPER:")
+    print("\nFetching data...")
     movies = get_movies()
     movies_data = movie_level_data_for_website(movies) #keys: films ids; values: dicts
     dates_data = date_level_data_for_website(movies) #keys: dates; values: dicts{date:date, movies:list of movies}
 
-    print("\nUploading to the database!")
+    print("\nUploading to database...")
     cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
     firebase_admin.initialize_app(cred)
     db = firestore.client()
@@ -24,7 +25,10 @@ def upload_movies(event, context):
         db.collection(u'per_movie').document(movie_id).set(movies_data[movie_id])
         time.sleep(0.05)
 
+    print("Done uploading screenings to database!")
+
 def upload_newsletter(event, context):
+    print("\n\nNEWSLETTER SCRAPER:")
     json_export_reviews, json_export_weeks, json_export_dates, json_export_cdc_without_images, json_export_curiosite_without_images  = collecting_reviews_and_weeks()
 
     if not firebase_admin._apps:
@@ -34,15 +38,17 @@ def upload_newsletter(event, context):
     upload_data_in_database(db, json_export_reviews, "reviews")
     upload_data_in_database(db, json_export_weeks, "weeks")
 
-    print("Pushing the list of dates to DB")
+    print("Pushing the list of dates.")
     ref = db.collection("reviews").document("all_dates")
     ref.set(json_export_dates, merge=True)
 
-    print("Pushing the list of review without images to DB")
+    print("Pushing the list of review without images.")
     ref = db.collection("reviews").document("all_coup_de_coeur")
     ref.set(json_export_cdc_without_images, merge=True)
     ref = db.collection("reviews").document("all_curiosite")
     ref.set(json_export_curiosite_without_images, merge=True)
+
+    print("Done uploading newsletter to database!")
 
 # For manual runs, uncomment the following lines:
 # upload_movies(None, None)

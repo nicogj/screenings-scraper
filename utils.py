@@ -6,7 +6,7 @@ from google_trans_new import google_translator
 detector = google_translator()
 
 stopwords_list = stopwords.words('english')+stopwords.words('french')
-stopwords_list = [elem for elem in stopwords_list if elem != "suis"]
+stopwords_list = [elem for elem in stopwords_list if elem not in ["suis"]]
 
 def get_theater_codes():
 

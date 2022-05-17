@@ -12,10 +12,11 @@ import math
 import io
 from PIL import Image
 from io import BytesIO
+from tqdm.auto import tqdm
 from datetime import datetime
 import time
 
-from utils import clean_up_string
+from utils import clean_up_string, encode_movie
 
 def clean_up_review(elem):
     string = str(elem)
@@ -102,10 +103,10 @@ def collecting_reviews_and_weeks():
 
     links = get_links()
 
-    print("\nCOLLECTING REVIEWS:")
+    print("\nFetching reviews...")
     over1MB = 0
     date_list, time_list, img_url_list, img_list, category_list, movie_list, review_text_list, showtime_list, id_list = [], [], [], [], [], [], [], [], []
-    for date, link in links.items():
+    for date, link in tqdm(links.items()):
 
         try:
             html = requests.get(link)
@@ -132,7 +133,7 @@ def collecting_reviews_and_weeks():
             print('{} failed'.format(date))
 
     reviews = pd.DataFrame({
-        'id': id_list,
+        'review_id': id_list,
         'date': date_list,
         'time': time_list,
         'category': category_list,
@@ -146,7 +147,7 @@ def collecting_reviews_and_weeks():
     reviews['month'] = pd.DatetimeIndex(pd.to_datetime(reviews['date'])).month.astype(str)
     for i, elem in enumerate(reviews['month']):
         reviews['month'][i] = elem.zfill(2)
-    reviews = reviews.sort_values(['date', 'id'], ascending=[False, True]).reset_index(drop=True)
+    reviews = reviews.sort_values(['date', 'review_id'], ascending=[False, True]).reset_index(drop=True)
 
     reviews.loc[
         reviews['movie']=='"Bonnie and Clyde", par Arthur Penn\xa0(1967)', 'movie'
@@ -172,11 +173,11 @@ def collecting_reviews_and_weeks():
     reviews['directors'] = reviews['movie'].apply(lambda x: re.sub('\(.+\)', '', x.split(',')[-1]).strip())
     reviews['year'] = reviews['movie'].apply(lambda x: x.split(',')[-1][-5:-1])
     reviews['display'] = np.where(reviews['category'].isin(['COUP DE CŒUR', 'À VOIR', 'On adore']), 'yes', 'no')
+    reviews['id'] = reviews.apply(lambda row: encode_movie(row['title'], row['year'], row['directors']), axis=1)
 
-
-    print("\nCOLLECTING WEEKS:")
+    print("\nFetching weeks...")
     date_list, name_list, week_text_list = [], [], []
-    for date, link in links.items():
+    for date, link in tqdm(links.items()):
 
         try:
             html = requests.get(link)
@@ -203,7 +204,7 @@ def collecting_reviews_and_weeks():
     weeks['month'] = pd.DatetimeIndex(pd.to_datetime(weeks['date'])).month.astype(str)
     weeks['week'] = weeks['week'].apply(lambda x: clean_up_week(x))
 
-    print("\nUploading to database:")
+    print("\nUploading to database...")
     json_export_reviews = {'reviews': []}
     for i in range(reviews.shape[0]):
         temp_dict = {}
@@ -250,7 +251,7 @@ def upload_data_in_database(db, data, key):
                 doc_name = elem["date"] + "_" + elem["category"]
             else:
                 doc_name = elem["date"] + "_" + elem['name']
-            print("Pushing {} to DB".format(doc_name))
+            print("Pushing {}.".format(doc_name))
             ref = db.collection(key).document(doc_name)
             ref.set(elem, merge=True)
         time.sleep(0.05)
