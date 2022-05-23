@@ -1,6 +1,8 @@
 import re
 import re
 import unidecode
+import nltk
+nltk.download('stopwords')
 from nltk.corpus import stopwords
 from google_trans_new import google_translator
 detector = google_translator()

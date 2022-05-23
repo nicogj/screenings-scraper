@@ -8,3 +8,6 @@ numpy
 Pillow
 tqdm
 firebase_admin
+Unidecode
+nltk
+google-trans-new
