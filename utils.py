@@ -2,6 +2,7 @@ import re
 import re
 import unidecode
 import nltk
+import time
 nltk.download('stopwords')
 from nltk.corpus import stopwords
 import firebase_admin
@@ -272,7 +273,8 @@ def download_collection_and_process(collection_name):
 
     def get_list_movies(db, category):
         docs = db.collection(collection_name).where(u'category', u'==', category).stream()
-        json_export_reviews_without_images = dict()
+        list_reviews_without_images_per_date = dict()
+        list_reviews_without_images_per_id = dict()
         for doc in docs:
             elem_aux = doc.to_dict().copy()
             del elem_aux["image"]
@@ -289,15 +291,25 @@ def download_collection_and_process(collection_name):
             elem_aux["id"] = encode_movie(elem_aux["title"], \
                 elem_aux["year"], elem_aux["directors"])
 
-            json_export_reviews_without_images[str(elem_aux["date"])] = elem_aux
-        return json_export_reviews_without_images
+            list_reviews_without_images_per_date[str(elem_aux["date"])] = elem_aux
+            list_reviews_without_images_per_id[elem_aux["id"]] = elem_aux
+        return list_reviews_without_images_per_date, list_reviews_without_images_per_id
 
-    json_export_cdc_without_images = get_list_movies(db, "COUP DE CŒUR")
-    json_export_curiosite_without_images = get_list_movies(db, "ON EST CURIEUX")
-    print("Pushing the list of review without images.")
+    cdc_without_images_date, cdc_without_images_id = get_list_movies(db, "COUP DE CŒUR")
+    curiosite_without_images_date, curiosite_without_images_id = get_list_movies(db, "ON EST CURIEUX")
+
+    print("Pushing all the reviews in the document 'all_reviews' (without images).")
     ref = db.collection("reviews").document("all_coup_de_coeur")
-    ref.set(json_export_cdc_without_images, merge=True)
+    ref.set(cdc_without_images_date, merge=True)
     ref = db.collection("reviews").document("all_curiosite")
-    ref.set(json_export_curiosite_without_images, merge=True)
+    ref.set(curiosite_without_images_date, merge=True)
 
-download_collection_and_process("reviews")
+    print("Pushing the movies with reviews in the Per movie collection.")
+    for movie_id in cdc_without_images_id.keys():
+        db.collection(u'per_movie').document(movie_id).set(cdc_without_images_id[movie_id], merge=True)
+        time.sleep(0.05)
+    for movie_id in curiosite_without_images_id.keys():
+        db.collection(u'per_movie').document(movie_id).set(curiosite_without_images_id[movie_id], merge=True)
+        time.sleep(0.05)
+
+#download_collection_and_process("reviews")
