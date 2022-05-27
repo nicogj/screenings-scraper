@@ -18,7 +18,7 @@ def upload_movies(event, context):
     db = firestore.client()
 
     for date in dates_data.keys():
-        db.collection(u'per_date').document(date).set(dates_data[date])
+        db.collection(u'per_date').document(date).set(dates_data[date], merge=True)
         time.sleep(0.05)
 
     for movie_id in movies_data.keys():
