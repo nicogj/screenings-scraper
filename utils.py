@@ -4,6 +4,8 @@ import unidecode
 import nltk
 nltk.download('stopwords')
 from nltk.corpus import stopwords
+import firebase_admin
+from firebase_admin import credentials, firestore
 from google_trans_new import google_translator
 detector = google_translator()
 
@@ -260,3 +262,42 @@ def clean_up_string(string):
         string = re.sub(r'\{}\s'.format(char), '{}&nbsp;'.format(char), string)
 
     return string.strip()
+
+
+
+def download_collection_and_process(collection_name):
+    cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+
+    def get_list_movies(db, category):
+        docs = db.collection(collection_name).where(u'category', u'==', category).stream()
+        json_export_reviews_without_images = dict()
+        for doc in docs:
+            elem_aux = doc.to_dict().copy()
+            del elem_aux["image"]
+            del elem_aux["image_file"]
+            del elem_aux["review"]
+            del elem_aux["showtime"]
+            del elem_aux["time"]
+            if not "title" in elem_aux:
+                elem_aux["title"] = elem_aux["movie_name"]
+            if not "directors" in elem_aux:
+                elem_aux["directors"] = elem_aux["movie_directors"]
+            if not "year" in elem_aux:
+                elem_aux["year"] = elem_aux["movie_year"]
+            elem_aux["id"] = encode_movie(elem_aux["title"], \
+                elem_aux["year"], elem_aux["directors"])
+
+            json_export_reviews_without_images[str(elem_aux["date"])] = elem_aux
+        return json_export_reviews_without_images
+
+    json_export_cdc_without_images = get_list_movies(db, "COUP DE CŒUR")
+    json_export_curiosite_without_images = get_list_movies(db, "ON EST CURIEUX")
+    print("Pushing the list of review without images.")
+    ref = db.collection("reviews").document("all_coup_de_coeur")
+    ref.set(json_export_cdc_without_images, merge=True)
+    ref = db.collection("reviews").document("all_curiosite")
+    ref.set(json_export_curiosite_without_images, merge=True)
+
+download_collection_and_process("reviews")
