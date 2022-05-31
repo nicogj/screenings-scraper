@@ -327,16 +327,17 @@ def load_past_reviews(json_path):
             elem["directors"] = elem["movie_directors"]
             elem["year"] = elem["movie_year"]
             elem["id"] = encode_movie(elem["title"], elem["year"], elem["directors"])
-            # doc_name = elem["date"] + "_" + elem["category"]
-            # ref = db.collection("reviews").document(doc_name)
-            # ref.set(elem, merge=True)
-            # time.sleep(0.05)
+            doc_name = elem["date"] + "_" + elem["category"]
+            ref = db.collection("reviews").document(doc_name)
+            ref.set(elem, merge=True)
+            time.sleep(0.05)
 
             del elem["image"]
             del elem["image_file"]
             del elem["review"]
             del elem["showtime"]
             del elem["time"]
+            print(elem["title"])
             db.collection(u'per_movie').document(elem["id"]).set(elem, merge=True)
             time.sleep(0.05)
 
