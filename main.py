@@ -5,7 +5,7 @@ from firebase_admin import credentials, firestore
 from scraper_screenings import get_movies, movie_level_data_for_website, date_level_data_for_website
 from scraper_newsletter import collecting_reviews_and_weeks, upload_data_in_database
 
-def upload_movies(event, context):
+def upload_screenings(event, context):
     print("\n\nSCREENINGS SCRAPER:")
     print("\nFetching data...")
     movies = get_movies()
@@ -49,7 +49,3 @@ def upload_newsletter(event, context):
     ref.set(json_export_curiosite_without_images, merge=True)
 
     print("Done uploading newsletter to database!")
-
-# For manual runs, uncomment the following lines:
-# upload_movies(None, None)
-# upload_newsletter(None, None)
