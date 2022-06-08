@@ -1,10 +1,16 @@
 import re
 import re
 import unidecode
+import nltk
+import time
+import json
 from nltk.corpus import stopwords
+import firebase_admin
+from firebase_admin import credentials, firestore
 from google_trans_new import google_translator
 detector = google_translator()
 
+nltk.download('stopwords')
 stopwords_list = stopwords.words('english')+stopwords.words('french')
 stopwords_list = [elem for elem in stopwords_list if elem not in ["suis"]]
 
@@ -258,3 +264,82 @@ def clean_up_string(string):
         string = re.sub(r'\{}\s'.format(char), '{}&nbsp;'.format(char), string)
 
     return string.strip()
+
+
+
+def download_collection_and_process(collection_name):
+    cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+
+    def get_list_movies(db, category):
+        docs = db.collection(collection_name).where(u'category', u'==', category).stream()
+        list_reviews_without_images_per_date = dict()
+        list_reviews_without_images_per_id = dict()
+        for doc in docs:
+            elem_aux = doc.to_dict().copy()
+            del elem_aux["image"]
+            del elem_aux["image_file"]
+            del elem_aux["review"]
+            del elem_aux["showtime"]
+            del elem_aux["time"]
+            if not "title" in elem_aux:
+                elem_aux["title"] = elem_aux["movie_name"]
+            if not "directors" in elem_aux:
+                elem_aux["directors"] = elem_aux["movie_directors"]
+            if not "year" in elem_aux:
+                elem_aux["year"] = elem_aux["movie_year"]
+            elem_aux["id"] = encode_movie(elem_aux["title"], \
+                elem_aux["year"], elem_aux["directors"])
+
+            list_reviews_without_images_per_date[str(elem_aux["date"])] = elem_aux
+            list_reviews_without_images_per_id[elem_aux["id"]] = elem_aux
+        return list_reviews_without_images_per_date, list_reviews_without_images_per_id
+
+    cdc_without_images_date, cdc_without_images_id = get_list_movies(db, "COUP DE CŒUR")
+    curiosite_without_images_date, curiosite_without_images_id = get_list_movies(db, "ON EST CURIEUX")
+
+    print("Pushing all the reviews in the document 'all_reviews' (without images).")
+    ref = db.collection("reviews").document("all_coup_de_coeur")
+    ref.set(cdc_without_images_date, merge=True)
+    ref = db.collection("reviews").document("all_curiosite")
+    ref.set(curiosite_without_images_date, merge=True)
+
+    print("Pushing the movies with reviews in the Per movie collection.")
+    for movie_id in cdc_without_images_id.keys():
+        db.collection(u'per_movie').document(movie_id).set(cdc_without_images_id[movie_id], merge=True)
+        time.sleep(0.05)
+    for movie_id in curiosite_without_images_id.keys():
+        db.collection(u'per_movie').document(movie_id).set(curiosite_without_images_id[movie_id], merge=True)
+        time.sleep(0.05)
+
+def load_past_reviews(json_path):
+    cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+
+    f = open(json_path, 'r')
+    data = json.load(f)["reviews"]
+    for elem in data:
+        print(elem["date"].split("-"))
+        if (elem["date"].split("-")[0]=="2021"):
+            elem["title"] = elem["movie_name"]
+            elem["directors"] = elem["movie_directors"]
+            elem["year"] = elem["movie_year"]
+            elem["id"] = encode_movie(elem["title"], elem["year"], elem["directors"])
+            doc_name = elem["date"] + "_" + elem["category"]
+            ref = db.collection("reviews").document(doc_name)
+            ref.set(elem, merge=True)
+            time.sleep(0.05)
+
+            del elem["image"]
+            del elem["image_file"]
+            del elem["review"]
+            del elem["showtime"]
+            del elem["time"]
+            print(elem["title"])
+            db.collection(u'per_movie').document(elem["id"]).set(elem, merge=True)
+            time.sleep(0.05)
+
+#download_collection_and_process("reviews")
+#load_past_reviews("data/reviews.json")
