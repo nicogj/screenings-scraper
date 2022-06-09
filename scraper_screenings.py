@@ -69,8 +69,8 @@ def get_movies():
 
     return movies
 
-def subset_to_classic_movies(movies):
-    last_year = datetime.today().year - 4
+def subset_to_classic_movies(movies, year_constraint):
+    last_year = datetime.today().year - year_constraint
     classic_movies = movies.copy()
     classic_movies = {
         k: v for k, v in classic_movies.items() if v['directors'] != None
@@ -93,9 +93,9 @@ def subset_to_classic_movies(movies):
 #PREP DATA FOR WEBSITE
 ######################
 
-def movie_level_data_for_website(movies):
+def movie_level_data_for_website(movies, year_constraint):
 
-    classic_movies = subset_to_classic_movies(movies)
+    classic_movies = subset_to_classic_movies(movies, year_constraint)
     by_movie = classic_movies.copy()
 
     # Additional variables:
@@ -108,9 +108,9 @@ def movie_level_data_for_website(movies):
     return by_movie
 
 
-def date_level_data_for_website(movies):
+def date_level_data_for_website(movies, year_constraint):
 
-    classic_movies = subset_to_classic_movies(movies)
+    classic_movies = subset_to_classic_movies(movies, year_constraint)
     by_date = {}
     for movie in classic_movies.keys():
         for date in classic_movies[movie]['screenings'].keys():

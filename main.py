@@ -9,8 +9,9 @@ def upload_screenings(event, context):
     print("\n\nSCREENINGS SCRAPER:")
     print("\nFetching data...")
     movies = get_movies()
-    movies_data = movie_level_data_for_website(movies) #keys: films ids; values: dicts
-    dates_data = date_level_data_for_website(movies) #keys: dates; values: dicts{date:date, movies:list of movies}
+    movies_data = movie_level_data_for_website(movies, year_constraint=4) #keys: films ids; values: dicts
+    dates_data = date_level_data_for_website(movies, year_constraint=4) #keys: dates; values: dicts{date:date, movies:list of movies}
+    all_movie_dates_data = date_level_data_for_website(movies, year_constraint=0) #keys: dates; values: dicts{date:date, movies:list of movies}
 
     print("\nUploading to database...")
     cred = credentials.Certificate('website-cine-e77fb4ab2924.json')
@@ -19,6 +20,10 @@ def upload_screenings(event, context):
 
     for date in dates_data.keys():
         db.collection(u'per_date').document(date).set(dates_data[date], merge=True)
+        time.sleep(0.05)
+
+    for date in all_movie_dates_data.keys():
+        db.collection(u'all_movies_per_date').document(date).set(dates_data[date], merge=True)
         time.sleep(0.05)
 
     for movie_id in movies_data.keys():
