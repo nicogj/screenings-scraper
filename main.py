@@ -23,7 +23,7 @@ def upload_screenings(event, context):
         time.sleep(0.05)
 
     for date in all_movie_dates_data.keys():
-        db.collection(u'all_movies_per_date').document(date).set(dates_data[date], merge=True)
+        db.collection(u'all_movies_per_date').document(date).set(all_movie_dates_data[date], merge=True)
         time.sleep(0.05)
 
     for movie_id in movies_data.keys():
