@@ -5,7 +5,7 @@ from firebase_admin import credentials, firestore
 from scraper_screenings import get_movies, movie_level_data_for_website, date_level_data_for_website
 from scraper_newsletter import collecting_reviews_and_weeks, upload_data_in_database
 
-def upload_screenings(event, context):
+def upload_movies(event, context):
     print("\n\nSCREENINGS SCRAPER:")
     print("\nFetching data...")
     movies = get_movies()
