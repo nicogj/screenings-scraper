@@ -9,6 +9,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.screenings:
-        upload_screenings(None, None)
+        upload_movies(None, None)
     if args.newsletter:
         upload_newsletter(None, None)
