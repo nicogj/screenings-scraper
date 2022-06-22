@@ -1,5 +1,5 @@
 import argparse
-from main import upload_screenings, upload_newsletter
+from main import upload_movies, upload_newsletter
 
 if __name__ == '__main__':
 
