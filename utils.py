@@ -7,8 +7,6 @@ import json
 from nltk.corpus import stopwords
 import firebase_admin
 from firebase_admin import credentials, firestore
-from google_trans_new import google_translator
-detector = google_translator()
 
 nltk.download('stopwords')
 stopwords_list = stopwords.words('english')+stopwords.words('french')
@@ -218,7 +216,6 @@ def reduce_movie_title(movie_title):
 
     # Remove stop words
     if len(movie_title.split(' ')) > 3:
-        # lang = detector.detect(movie_title)[1] # THIS STEP IS TAKING TOO LONG
         movie_title = movie_title.split(' ')
         try:
             # non_stop_words = [word for word in movie_title if word not in stopwords.words(lang)]
@@ -340,6 +337,3 @@ def load_past_reviews(json_path):
             print(elem["title"])
             db.collection(u'per_movie').document(elem["id"]).set(elem, merge=True)
             time.sleep(0.05)
-
-#download_collection_and_process("reviews")
-#load_past_reviews("data/reviews.json")

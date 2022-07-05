@@ -9,8 +9,8 @@ def upload_movies(event, context):
     print("\n\nSCREENINGS SCRAPER:")
     print("\nFetching data...")
     movies = get_movies()
-    movies_data = movie_level_data_for_website(movies, year_constraint=4) #keys: films ids; values: dicts
-    dates_data = date_level_data_for_website(movies, year_constraint=4) #keys: dates; values: dicts{date:date, movies:list of movies}
+    movies_data = movie_level_data_for_website(movies, year_constraint=3) #keys: films ids; values: dicts
+    dates_data = date_level_data_for_website(movies, year_constraint=3) #keys: dates; values: dicts{date:date, movies:list of movies}
     all_movie_dates_data = date_level_data_for_website(movies, year_constraint=0) #keys: dates; values: dicts{date:date, movies:list of movies}
 
     print("\nUploading to database...")
