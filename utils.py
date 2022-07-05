@@ -195,7 +195,18 @@ def good_movie(movie):
         "Les Trois brigands",
         "Le Chant de la Mer",
         "Clochette et le secret des fées",
-        "Lilla Anna"
+        "Lilla Anna",
+        "La Cabane aux oiseaux",
+        "Zibilla ou la vie zébrée",
+        "Chats par-ci, Chats par-là",
+        "Yakari, le film",
+        "La Chasse à l'Ours",
+        "Tout en haut du monde",
+        "Les Fables de Monsieur Renard",
+        "Le Voyage dans la Lune",
+        "Gros-pois et Petit-point",
+        "La pie voleuse",
+        "L'Equipier", "Demain je traverse", "L’Ombre d’un mensonge", "Greener Grass" # A supprimer dans quelques mois, mais pour l'instant c'est pas une ressortie
     ]
     if movie['directors']==None:
         return False
